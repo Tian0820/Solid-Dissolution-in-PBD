@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 using Common.Mathematics.LinearAlgebra;
 
@@ -25,7 +26,7 @@ namespace PositionBasedDynamics.Bodies.Ridgid
 
         private void CreateParticles(ParticleSource source, Matrix4x4d RTS)
         {
-
+            Debug.Log("solid particles: " + this.NumParticles);
             for (int i = 0; i < NumParticles; i++)
             {
                 Vector4d pos = RTS * source.Positions[i].xyz1;

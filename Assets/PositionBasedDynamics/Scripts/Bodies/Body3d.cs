@@ -108,7 +108,7 @@ namespace PositionBasedDynamics.Bodies
             int newNumParticles = this.NumParticles + body.NumParticles;
             InitFluidAttr(newNumParticles);
 
-            //Debug.Log("11body1 particles: " + this.NumParticles + ", body2 particles: " + body.NumParticles);
+            Debug.Log("11body1 particles: " + this.NumParticles + ", body2 particles: " + body.NumParticles);
             Body3d newBody = this;
             newBody.Positions.AddRange(body.Positions);
 
