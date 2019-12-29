@@ -29,7 +29,8 @@ namespace PositionBasedDynamics.Constraints
 
             for (int i = 0; i < numParticles; i++)
             {
-                RestCm += Body.Positions[i] * mass;
+                //RestCm += Body.Positions[i] * mass;
+                RestCm += Body.Particles[i].Position * mass;
                 wsum += mass;
             }
 
@@ -41,7 +42,7 @@ namespace PositionBasedDynamics.Constraints
 
             for (int i = 0; i < numParticles; i++)
             {
-                Vector3d q = Body.Positions[i] - RestCm;
+                Vector3d q = Body.Particles[i].Position - RestCm;
 
                 A[0, 0] += mass * q.x * q.x;
                 A[0, 1] += mass * q.x * q.y;
@@ -67,12 +68,12 @@ namespace PositionBasedDynamics.Constraints
      
             Vector3d cm = new Vector3d(0.0, 0.0, 0.0);
             double wsum = 0.0;
-            double mass = Body.ParticleMass;
+            double mass = Body.Particles[0].ParticleMass;
             int numParticles = Body.NumParticles;
 
             for (int i = 0; i < numParticles; i++)
             {
-                cm += Body.Predicted[i] * mass;
+                cm += Body.Particles[i].Predicted * mass;
                 wsum += mass;
             }
 
@@ -83,7 +84,7 @@ namespace PositionBasedDynamics.Constraints
             for (int i = 0; i < numParticles; i++)
             {
                 Vector3d q = RestPositions[i];
-                Vector3d p = Body.Positions[i] - cm;
+                Vector3d p = Body.Particles[i].Position - cm;
 
                 A[0, 0] += mass * p.x * q.x;
                 A[0, 1] += mass * p.x * q.y;
@@ -112,7 +113,7 @@ namespace PositionBasedDynamics.Constraints
             for (int i = 0; i < numParticles; i++)
             {
                 Vector3d goal = cm + R * RestPositions[i];
-                Body.Predicted[i] += (goal - Body.Predicted[i]) * Stiffness * di;
+                Body.Particles[i].Predicted += (goal - Body.Particles[i].Predicted) * Stiffness * di;
             }
         }
 

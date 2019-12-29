@@ -26,51 +26,51 @@ namespace PositionBasedDynamics.Constraints
         internal StrainTetConstraint3d(Body3d body, int p0, int p1, int p2, int p3, double stiffness) : base(body)
         {
 
-            P0 = p0;
-            P1 = p1;
-            P2 = p2;
-            P3 = p3;
+            //P0 = p0;
+            //P1 = p1;
+            //P2 = p2;
+            //P3 = p3;
 
-            Stiffness = stiffness;
-            NormalizeStretch = false;
-            NormalizeShear = false;
+            //Stiffness = stiffness;
+            //NormalizeStretch = false;
+            //NormalizeShear = false;
 
-            Correction = new Vector3d[4];
+            //Correction = new Vector3d[4];
 
-            Vector3d x0 = body.Positions[P0];
-            Vector3d x1 = body.Positions[P1];
-            Vector3d x2 = body.Positions[P2];
-            Vector3d x3 = body.Positions[P3];
+            //Vector3d x0 = body.Positions[P0];
+            //Vector3d x1 = body.Positions[P1];
+            //Vector3d x2 = body.Positions[P2];
+            //Vector3d x3 = body.Positions[P3];
 
-            Matrix3x3d restMatrix = new Matrix3x3d();
+            //Matrix3x3d restMatrix = new Matrix3x3d();
 
-            restMatrix.SetColumn(0, x1 - x0);
-            restMatrix.SetColumn(1, x2 - x0);
-            restMatrix.SetColumn(2, x3 - x0);
+            //restMatrix.SetColumn(0, x1 - x0);
+            //restMatrix.SetColumn(1, x2 - x0);
+            //restMatrix.SetColumn(2, x3 - x0);
 
-            InvRestMatrix = restMatrix.Inverse;
+            //InvRestMatrix = restMatrix.Inverse;
 
         }
 
         internal override void ConstrainPositions(double di)
         {
 
-            Vector3d x0 = Body.Predicted[P0];
-            Vector3d x1 = Body.Predicted[P1];
-            Vector3d x2 = Body.Predicted[P2];
-            Vector3d x3 = Body.Predicted[P3];
+            //Vector3d x0 = Body.Predicted[P0];
+            //Vector3d x1 = Body.Predicted[P1];
+            //Vector3d x2 = Body.Predicted[P2];
+            //Vector3d x3 = Body.Predicted[P3];
 
-            double invMass = 1.0 / Body.ParticleMass;
+            //double invMass = 1.0 / Body.ParticleMass;
 
-            bool res = SolveConstraint(x0, x1, x2, x3, invMass);
+            //bool res = SolveConstraint(x0, x1, x2, x3, invMass);
 
-            if (res)
-            {
-                Body.Predicted[P0] += Correction[0] * di;
-                Body.Predicted[P1] += Correction[1] * di;
-                Body.Predicted[P2] += Correction[2] * di;
-                Body.Predicted[P3] += Correction[3] * di;
-            }
+            //if (res)
+            //{
+            //    Body.Predicted[P0] += Correction[0] * di;
+            //    Body.Predicted[P1] += Correction[1] * di;
+            //    Body.Predicted[P2] += Correction[2] * di;
+            //    Body.Predicted[P3] += Correction[3] * di;
+            //}
 
         }
 

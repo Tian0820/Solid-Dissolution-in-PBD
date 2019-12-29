@@ -29,11 +29,11 @@ namespace PositionBasedDynamics.Collisions
                 Body3d body = bodies[j];
 
                 int numParticles = body.NumParticles;
-                double radius = body.ParticleRadius;
+                double radius = body.Particles[0].ParticleRadius;
 
                 for (int i = 0; i < numParticles; i++)
                 {
-                    double d = Vector3d.Dot(Normal, body.Predicted[i]) + Distance - radius;
+                    double d = Vector3d.Dot(Normal, body.Particles[i].Predicted) + Distance - radius;
 
                     if (d < 0.0)
                         contacts.Add(new BodyPlaneContact3d(body, i, Normal, Distance));

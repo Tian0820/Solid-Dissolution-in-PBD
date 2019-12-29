@@ -27,61 +27,61 @@ namespace PositionBasedDynamics.Constraints
         internal FEMTetConstraint3d(Body3d body, int p0, int p1, int p2, int p3, double youngsModulus) : base(body)
         {
 
-            P0 = p0;
-            P1 = p1;
-            P2 = p2;
-            P3 = p3;
+            //P0 = p0;
+            //P1 = p1;
+            //P2 = p2;
+            //P3 = p3;
 
-            YoungsModulus = youngsModulus;
-            PoissonRatio = 0.3;
-            Correction = new Vector3d[4];
+            //YoungsModulus = youngsModulus;
+            //PoissonRatio = 0.3;
+            //Correction = new Vector3d[4];
 
-            Vector3d x0 = Body.Positions[P0];
-            Vector3d x1 = Body.Positions[P1];
-            Vector3d x2 = Body.Positions[P2];
-            Vector3d x3 = Body.Positions[P3];
+            //Vector3d x0 = Body.Positions[P0];
+            //Vector3d x1 = Body.Positions[P1];
+            //Vector3d x2 = Body.Positions[P2];
+            //Vector3d x3 = Body.Positions[P3];
 
-            RestVolume = Math.Abs((1.0f / 6.0) * Vector3d.Dot(x3 - x0, Vector3d.Cross(x2 - x0, x1 - x0)));
+            //RestVolume = Math.Abs((1.0f / 6.0) * Vector3d.Dot(x3 - x0, Vector3d.Cross(x2 - x0, x1 - x0)));
 
-            Matrix3x3d restMatrix = new Matrix3x3d();
+            //Matrix3x3d restMatrix = new Matrix3x3d();
 
-            restMatrix.SetColumn(0, x0 - x3);
-            restMatrix.SetColumn(1, x1 - x3);
-            restMatrix.SetColumn(2, x2 - x3);
+            //restMatrix.SetColumn(0, x0 - x3);
+            //restMatrix.SetColumn(1, x1 - x3);
+            //restMatrix.SetColumn(2, x2 - x3);
 
-            InvRestMatrix = restMatrix.Inverse;
+            //InvRestMatrix = restMatrix.Inverse;
 
         }
 
         internal override void ConstrainPositions(double di)
         {
 
-            Vector3d x0 = Body.Predicted[P0];
-            Vector3d x1 = Body.Predicted[P1];
-            Vector3d x2 = Body.Predicted[P2];
-            Vector3d x3 = Body.Predicted[P3];
+            //Vector3d x0 = Body.Predicted[P0];
+            //Vector3d x1 = Body.Predicted[P1];
+            //Vector3d x2 = Body.Predicted[P2];
+            //Vector3d x3 = Body.Predicted[P3];
 
-            double mass = Body.ParticleMass;
-            double invMass = 1.0 / mass;
+            //double mass = Body.ParticleMass;
+            //double invMass = 1.0 / mass;
 
-            double currentVolume = -(1.0f / 6.0) * Vector3d.Dot(x3 - x0, Vector3d.Cross(x2 - x0, x1 - x0));
+            //double currentVolume = -(1.0f / 6.0) * Vector3d.Dot(x3 - x0, Vector3d.Cross(x2 - x0, x1 - x0));
 
-            HandleInversion = false;
-            if (currentVolume / RestVolume < 0.2) // Only 20% of initial volume left
-                HandleInversion = true;
+            //HandleInversion = false;
+            //if (currentVolume / RestVolume < 0.2) // Only 20% of initial volume left
+            //    HandleInversion = true;
 
-            bool res = SolveConstraint(x0, x1, x2, x3, invMass);
+            //bool res = SolveConstraint(x0, x1, x2, x3, invMass);
 
-            if (res)
-            {
-                Body.Predicted[P0] += Correction[0] * di;
+            //if (res)
+            //{
+            //    Body.Predicted[P0] += Correction[0] * di;
 
-                Body.Predicted[P1] += Correction[1] * di;
+            //    Body.Predicted[P1] += Correction[1] * di;
 
-                Body.Predicted[P2] += Correction[2] * di;
+            //    Body.Predicted[P2] += Correction[2] * di;
 
-                Body.Predicted[P3] += Correction[3] * di;
-            }
+            //    Body.Predicted[P3] += Correction[3] * di;
+            //}
 
         }
 

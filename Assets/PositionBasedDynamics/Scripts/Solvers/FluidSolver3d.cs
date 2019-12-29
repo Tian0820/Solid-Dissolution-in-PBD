@@ -7,7 +7,6 @@ using Common.Mathematics.LinearAlgebra;
 
 using PositionBasedDynamics.Forces;
 using PositionBasedDynamics.Bodies;
-using PositionBasedDynamics.Bodies.Fluids;
 
 namespace PositionBasedDynamics.Solvers
 {
@@ -23,7 +22,6 @@ namespace PositionBasedDynamics.Solvers
         {
             Body = body;
             Forces = new List<ExternalForce3d>();
-            //Debug.Log("body: " + Body.NumParticles);
         }
 
         public void AddForce(ExternalForce3d force)
@@ -35,7 +33,7 @@ namespace PositionBasedDynamics.Solvers
         {
 
             if (dt == 0.0) return;
-
+            
             AppyExternalForces(dt);
 
             EstimatePositions(dt);
@@ -53,7 +51,7 @@ namespace PositionBasedDynamics.Solvers
         {
             for (int i = 0; i < Body.NumParticles; i++)
             {
-                Body.Velocities[i] -= (Body.Velocities[i] * Body.Dampning) * dt;
+                Body.Particles[i].Velocity -= (Body.Particles[i].Velocity * Body.Dampning) * dt;
             }
 
             for (int i = 0; i < Forces.Count; i++)
@@ -66,7 +64,7 @@ namespace PositionBasedDynamics.Solvers
         {
             for (int i = 0; i < Body.NumParticles; i++)
             {
-                Body.Predicted[i] = Body.Positions[i] + dt * Body.Velocities[i];
+                Body.Particles[i].Predicted = Body.Particles[i].Position + dt * Body.Particles[i].Velocity;
             }
         }
 
@@ -81,8 +79,8 @@ namespace PositionBasedDynamics.Solvers
 
             for (int i = 0; i < Body.NumParticles; i++)
             {
-                Vector3d d = Body.Predicted[i] - Body.Positions[i];
-                Body.Velocities[i] = d * inv_dt;
+                Vector3d d = Body.Particles[i].Predicted - Body.Particles[i].Position;
+                Body.Particles[i].Velocity = d * inv_dt;
             }
         }
 
@@ -90,7 +88,7 @@ namespace PositionBasedDynamics.Solvers
         {
             for (int i = 0; i < Body.NumParticles; i++)
             {
-                Body.Positions[i] = Body.Predicted[i];
+                Body.Particles[i].Position = Body.Particles[i].Predicted;
             }
         }
 

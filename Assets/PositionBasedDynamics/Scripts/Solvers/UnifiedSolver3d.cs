@@ -8,7 +8,6 @@ using Common.Mathematics.LinearAlgebra;
     
 using PositionBasedDynamics.Forces;
 using PositionBasedDynamics.Bodies;
-using PositionBasedDynamics.Bodies.Fluids;
 using PositionBasedDynamics.Collisions;
 
 namespace PositionBasedDynamics.Solvers

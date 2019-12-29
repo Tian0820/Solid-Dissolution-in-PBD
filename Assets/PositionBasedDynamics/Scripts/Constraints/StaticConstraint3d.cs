@@ -18,13 +18,13 @@ namespace PositionBasedDynamics.Constraints
         internal StaticConstraint3d(Body3d body, int i) : base(body)
         {
             i0 = i;
-            Position = body.Positions[i];
+            Position = Body.Particles[i].Position;
         }
 
         internal override void ConstrainPositions(double di)
         {
-            Body.Positions[i0] = Position;
-            Body.Predicted[i0] = Position;
+            Body.Particles[i0].Position = Position;
+            Body.Particles[i0].Position = Position;
         }
 
     }

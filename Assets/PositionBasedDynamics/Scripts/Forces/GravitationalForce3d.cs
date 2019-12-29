@@ -28,7 +28,7 @@ namespace PositionBasedDynamics.Forces
             int len = body.NumParticles;
             for (int i = 0; i < len; i++)
             {
-                body.Velocities[i] += dt * Gravity;
+                body.Particles[i].Velocity += dt * Gravity;
             }
 
         }

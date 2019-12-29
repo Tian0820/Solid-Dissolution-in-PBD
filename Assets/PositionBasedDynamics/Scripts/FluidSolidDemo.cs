@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,8 +9,6 @@ using Common.Unity.Mathematics;
 
 using PositionBasedDynamics.Solvers;
 using PositionBasedDynamics.Bodies;
-using PositionBasedDynamics.Bodies.Fluids;
-using PositionBasedDynamics.Bodies.Ridgid;
 using PositionBasedDynamics.Sources;
 using PositionBasedDynamics.Forces;
 using PositionBasedDynamics.Collisions;
@@ -145,7 +143,7 @@ namespace PositionBasedDynamics
             T = Matrix4x4d.Translate(new Vector3d(0.0, 10.0, 0.0));
             R = Matrix4x4d.Rotate(new Vector3d(0.0, 0.0, 25.0));
 
-            RidgidBody3d body = new RidgidBody3d(source, radius, mass, T * R);
+            Body3d body = new Body3d(ParticlePhase.RIGID, source, radius, mass, T * R);
             body.Dampning = 1.0;
             body.RandomizePositions(rnd, radius * 0.01);
 
@@ -167,19 +165,19 @@ namespace PositionBasedDynamics
             OuterBounds = InnerBounds;
 
             int thickness = 1;
-            OuterBounds.Min -= new Vector3d(radius * 2 * thickness);
-            OuterBounds.Max += new Vector3d(radius * 2 * thickness);
+            OuterBounds.Min -= radius * 2 * thickness;
+            OuterBounds.Max += radius * 2 * thickness;
 
             ParticleSource source = new ParticlesFromBounds(radius, OuterBounds, InnerBounds);
 
             Boundary = new FluidBoundary3d(source, radius, density, Matrix4x4d.Identity);
 
             BoundarySpheres = new GameObject[Boundary.NumParticles];
-            float diam = (float)Boundary.ParticleDiameter;
+            float diam = (float)Boundary.Particles[0].ParticleDiameter;
 
             for (int i = 0; i < BoundarySpheres.Length; i++)
             {
-                Vector3d pos = Boundary.Positions[i];
+                Vector3d pos = Boundary.Particles[i].Position;
 
                 GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 
@@ -211,8 +209,8 @@ namespace PositionBasedDynamics
 
             System.Random rnd = new System.Random(0);
 
-            Body3d body1 = new Body3d(source1, radius, density, Matrix4x4d.Identity);
-            Body3d body2 = new Body3d(source2, radius, density, Matrix4x4d.Identity);
+            Body3d body1 = new Body3d(ParticlePhase.FLUID, source1, radius, density, Matrix4x4d.Identity);
+            Body3d body2 = new Body3d(ParticlePhase.FLUID, source2, radius, density, Matrix4x4d.Identity);
 
             Body = body1.ContactBody3d(body2);
 
@@ -223,11 +221,11 @@ namespace PositionBasedDynamics
 
             FluidSpheres = new GameObject[Body.NumParticles];
 
-            float diam = (float)Body.ParticleDiameter;
+            float diam = (float)Body.Particles[0].ParticleDiameter;
 
             for (int i = 0; i < FluidSpheres.Length; i++)
             {
-                Vector3d pos = Body.Positions[i];
+                Vector3d pos = Body.Particles[i].Position;
 
                 GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 sphere.transform.parent = transform;
@@ -253,13 +251,16 @@ namespace PositionBasedDynamics
                 Body3d body = SolidSolver.Bodies[j];
 
                 int numParticles = body.NumParticles;
-                float diam = (float)body.ParticleDiameter;
+
+                //Debug.Log("solid body.NumParticles: " + numParticles);
+
+                float diam = (float)body.Particles[0].ParticleDiameter;
 
                 List<GameObject> spheres = new List<GameObject>(numParticles);
 
                 for (int i = 0; i < numParticles; i++)
                 {
-                    Vector3 pos = MathConverter.ToVector3(body.Positions[i]);
+                    Vector3 pos = MathConverter.ToVector3(body.Particles[i].Position);
 
                     GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                     sphere.transform.parent = transform;
@@ -280,7 +281,7 @@ namespace PositionBasedDynamics
                 for (int i = 0; i < FluidSpheres.Length; i++)
                 {
                     //Debug.Log("Body positons: " + Body.Positions[i]);
-                    Vector3d pos = Body.Positions[i];
+                    Vector3d pos = Body.Particles[i].Position;
                     FluidSpheres[i].transform.position = new Vector3((float)pos.x, (float)pos.y, (float)pos.z);
                 }
             }
@@ -291,7 +292,7 @@ namespace PositionBasedDynamics
                 {
                     BoundarySpheres[i].SetActive(drawBoundary);
 
-                    Vector3d pos = Boundary.Positions[i];
+                    Vector3d pos = Boundary.Particles[i].Position;
                     BoundarySpheres[i].transform.position = new Vector3((float)pos.x, (float)pos.y, (float)pos.z);
                 }
             }
@@ -308,7 +309,7 @@ namespace PositionBasedDynamics
 
                     for (int i = 0; i < spheres.Count; i++)
                     {
-                        Vector3d pos = body.Positions[i];
+                        Vector3d pos = body.Particles[i].Position;
                         spheres[i].transform.position = new Vector3((float)pos.x, (float)pos.y, (float)pos.z);
                     }
                 }

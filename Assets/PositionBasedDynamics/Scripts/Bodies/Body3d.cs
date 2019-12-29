@@ -9,16 +9,14 @@ using Common.Geometry.Shapes;
 using PositionBasedDynamics.Collisions;
 using PositionBasedDynamics.Constraints;
 using PositionBasedDynamics.Sources;
-using PositionBasedDynamics.Bodies.Fluids;
 
 namespace PositionBasedDynamics.Bodies
 {
 
     public class Body3d
     {
-        //public List<>
 
-        public double Density { get; set; }
+        public double Stiffness { get; private set; }
 
         public double Viscosity { get; set; }
 
@@ -26,27 +24,17 @@ namespace PositionBasedDynamics.Bodies
 
         internal CubicKernel3d Kernel { get; private set; }
 
-        internal ParticleHash3d Hash { get; private set; }
+        internal ParticleHash3d FluidHash { get; private set; }
 
-        internal double[] Densities { get; private set; }
+        internal ParticleHash3d RigidHash { get; private set; }
 
-        public int NumParticles { get { return Positions.Count; } }
+        public int NumParticles { get { return Particles.Count; } }
 
         public int NumConstraints { get { return Constraints.Count; } }
 
         public double Dampning { get; set; }
 
-        public double ParticleRadius { get; protected set; }
-
-        public double ParticleDiameter { get { return ParticleRadius * 2.0; } }
-
-        public double ParticleMass { get; protected set; }
-
-        public List<Vector3d> Positions { get; set; }
-
-        public List<Vector3d> Predicted { get; set; }
-
-        public List<Vector3d> Velocities { get; set; }
+        public List<Particle> Particles { get; set; }
 
         public Box3d Bounds { get; private set; }
 
@@ -59,66 +47,68 @@ namespace PositionBasedDynamics.Bodies
             InitBody3d(numParticles, radius, mass);
         }
 
-        public Body3d(ParticleSource source, double radius, double density, Matrix4x4d RTS)
+        // particleAttr: density if FLUID, mass if RIGID
+        public Body3d(ParticlePhase phase, ParticleSource source, double radius, double particleAttr, Matrix4x4d RTS)
         {
             InitBody3d(source.NumParticles, radius, 1.0);
-            Density = density;
-            Viscosity = 0.02;
-            Dampning = 0;
+            if (phase == ParticlePhase.FLUID)
+            {
+                for (int i = 0; i < source.NumParticles; i++)
+                {
+                    double d = radius * 2;
+                    Particle newParticle = new Particle(radius, 0.8 * d * d * d * particleAttr, particleAttr, ParticlePhase.FLUID);
+                    Particles.Add(newParticle);
+                }
+                Viscosity = 0.02;
+                Dampning = 0;
 
-            double d = ParticleDiameter;
-            ParticleMass = 0.8 * d * d * d * Density;
 
-            CreateParticles(source, RTS);
-            InitFluidAttr(NumParticles);
+                CreateParticles(source, RTS);
+                InitFluidAttr();
+            } else if (phase == ParticlePhase.RIGID)
+            {
+                for (int i = 0; i < source.NumParticles; i++)
+                {
+                    double mass = particleAttr;
+                    Particle newParticle = new Particle(radius, mass, 0, ParticlePhase.RIGID);
+                    Particles.Add(newParticle);
+                }
 
+                Stiffness = 1.0;
+
+                CreateParticles(source, RTS);
+                Constraints.Add(new ShapeMatchingConstraint3d(this, particleAttr, Stiffness));
+            }
         }
 
         private void InitBody3d(int numParticles, double radius, double mass)
         {
-            Positions = Enumerable.Repeat(new Vector3d(), numParticles).ToList();
-            Predicted = Enumerable.Repeat(new Vector3d(), numParticles).ToList();
-            Velocities = Enumerable.Repeat(new Vector3d(), numParticles).ToList();
+            Particles = new List<Particle>();
             Constraints = new List<Constraint3d>();
             StaticConstraints = new List<StaticConstraint3d>();
-
-            ParticleRadius = radius;
-            ParticleMass = mass;
             Dampning = 1;
-
-            if (ParticleMass <= 0)
-                throw new ArgumentException("Particles mass <= 0");
-
-            if (ParticleRadius <= 0)
-                throw new ArgumentException("Particles radius <= 0");
         }
 
-        private void InitFluidAttr(int numParticles)
+        private void InitFluidAttr()
         {
-            double cellSize = ParticleRadius * 4.0;
+            double cellSize = Particles[0].ParticleRadius * 4.0;
             Kernel = new CubicKernel3d(cellSize);
-            Hash = new ParticleHash3d(numParticles, cellSize);
 
-            Lambda = new double[numParticles];
-            Densities = new double[numParticles];
+            FluidHash = new ParticleHash3d(NumParticles, cellSize);
+
+            Lambda = new double[NumParticles];
         }
 
         public Body3d ContactBody3d(Body3d body)
         {
-            int newNumParticles = this.NumParticles + body.NumParticles;
-            InitFluidAttr(newNumParticles);
-
-            Debug.Log("11body1 particles: " + this.NumParticles + ", body2 particles: " + body.NumParticles);
             Body3d newBody = this;
-            newBody.Positions.AddRange(body.Positions);
 
-            //Debug.Log("22body1 particles: " + this.NumParticles + ", body2 particles: " + body.NumParticles);
-
-            newBody.Predicted.AddRange(body.Predicted);
-            newBody.Velocities.AddRange(body.Velocities);
+            newBody.Particles.AddRange(body.Particles);
 
             newBody.Constraints.AddRange(body.Constraints);
             newBody.StaticConstraints.AddRange(body.StaticConstraints);
+            newBody.FluidHash = new ParticleHash3d(newBody.NumParticles, newBody.Particles[0].ParticleRadius * 4.0);
+            newBody.Lambda = new double[newBody.NumParticles];
 
             return newBody;
         }
@@ -159,7 +149,7 @@ namespace PositionBasedDynamics.Bodies
                 double ry = rnd.NextDouble() * 2.0 - 1.0;
                 double rz = rnd.NextDouble() * 2.0 - 1.0;
 
-                Positions[i] += new Vector3d(rx, ry, rz) * amount;
+                Particles[i].Position += new Vector3d(rx, ry, rz) * amount;
             }
         }
 
@@ -185,7 +175,7 @@ namespace PositionBasedDynamics.Bodies
         {
             for (int i = 0; i < NumParticles; i++)
             {
-                if (bounds.Contains(Positions[i]))
+                if (bounds.Contains(Particles[i].Position))
                 {
                     StaticConstraints.Add(new StaticConstraint3d(this, i));
                 }
@@ -197,14 +187,21 @@ namespace PositionBasedDynamics.Bodies
             Vector3d min = new Vector3d(double.PositiveInfinity);
             Vector3d max = new Vector3d(double.NegativeInfinity);
 
-            for (int i = 0; i < NumParticles; i++)
+            List<Vector3d> postions = new List<Vector3d>();
+            for(int i = 0; i < Particles.Count; i++)
             {
-                min.Min(Positions[i]);
-                max.Max(Positions[i]);
+                postions.Add(Particles[i].Position);
             }
 
-            min -= ParticleRadius;
-            max += ParticleRadius;
+            for (int i = 0; i < NumParticles; i++)
+            {
+                min.Min(postions[i]);
+                max.Max(postions[i]);
+            }
+
+            double radius = Particles[0].ParticleRadius;
+            min -= radius;
+            max += radius;
 
             Bounds = new Box3d(min, max);
         }
@@ -212,6 +209,7 @@ namespace PositionBasedDynamics.Bodies
         public void AddBoundry(FluidBoundary3d boundry)
         {
             FluidConstraint3d constraint = new FluidConstraint3d(this, boundry);
+
             Constraints.Add(constraint);
         }
 
@@ -220,7 +218,8 @@ namespace PositionBasedDynamics.Bodies
             for (int i = 0; i < NumParticles; i++)
             {
                 Lambda[i] = 0.0;
-                Densities[i] = 0.0;
+                Particles[i].DynamicDensity = 0.0;
+                //Densities[i] = 0.0;
             }
         }
 
@@ -228,40 +227,47 @@ namespace PositionBasedDynamics.Bodies
         {
             for (int i = 0; i < NumParticles; i++)
             {
-                Vector3d tmp = Positions[i];
+                Vector3d tmp = Particles[i].Position;
 
                 int idx = rnd.Next(0, NumParticles - 1);
-                Positions[i] = Positions[idx];
-                Positions[idx] = tmp;
+                Particles[i].Position = Particles[idx].Position;
+                Particles[idx].Position = tmp;
             }
-            //Predicted = Positions;
-            //Array.Copy(Positions, Predicted, NumParticles);
         }
 
         internal void ComputeViscosity()
         {
-            int[,] neighbors = Hash.Neighbors;
-            int[] numNeighbors = Hash.NumNeighbors;
+            int[,] neighbors = new int[Particles.Count, FluidHash.MaxNeighbors];
+            int[] numNeighbors = new int[Particles.Count];
 
-            double viscosityMulMass = Viscosity * ParticleMass;
+            for (int i = 0; i < Particles.Count; i++)
+            {
+                numNeighbors[i] = Particles[i].NeighbourIndexes.Count;
+                for (int j = 0; j < numNeighbors[i]; j++)
+                {
+                    neighbors[i, j] = Particles[i].NeighbourIndexes[j];
+                }
+            }
+
+            double viscosityMulMass = Viscosity * Particles[0].ParticleMass;
 
             // Compute viscosity forces (XSPH) 
             for (int i = 0; i < NumParticles; i++)
             {
                 //Viscosity for particle Pi. Modifies the velocity.
                 //Vi = Vi + c * SUMj Vij * W(Pi - Pj, h)
-                Vector3d pi = Predicted[i];
+                Vector3d pi = Particles[i].Predicted;
 
                 for (int j = 0; j < numNeighbors[i]; j++)
                 {
                     int neighborIndex = neighbors[i, j];
                     if (neighborIndex < NumParticles) // Test if fluid particle
                     {
-                        double invDensity = 1.0 / Densities[neighborIndex];
-                        Vector3d pn = Predicted[neighborIndex];
+                        double invDensity = 1.0 / Particles[neighborIndex].DynamicDensity;
+                        Vector3d pn = Particles[neighborIndex].Predicted;
 
                         double k = Kernel.W(pi.x - pn.x, pi.y - pn.y, pi.z - pn.z) * viscosityMulMass * invDensity;
-                        Velocities[i] -= k * (Velocities[i] - Velocities[neighborIndex]);
+                        Particles[i].Velocity -= k * (Particles[i].Velocity - Particles[neighborIndex].Velocity);
                     }
                 }
             }
@@ -274,13 +280,11 @@ namespace PositionBasedDynamics.Bodies
             for (int i = 0; i < NumParticles; i++)
             {
                 Vector4d pos = RTS * source.Positions[i].xyz1;
-                Positions[i] = new Vector3d(pos.x, pos.y, pos.z);
-                Predicted[i] = Positions[i];
+                Particles[i].Position = new Vector3d(pos.x, pos.y, pos.z);
+                Particles[i].Predicted = Particles[i].Position;
             }
 
         }
-
-
     }
 
 }

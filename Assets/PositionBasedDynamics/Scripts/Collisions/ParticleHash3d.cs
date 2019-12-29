@@ -1,3 +1,4 @@
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 
@@ -22,13 +23,13 @@ namespace PositionBasedDynamics.Collisions
             }
         }
 
-        public int[,] Neighbors { get; private set; }
+        private int[,] Neighbors;
 
-        public int[] NumNeighbors { get; private set; }
+        private int[] NumNeighbors;
 
         public int NumParticles { get; private set; }
 
-        private int MaxNeighbors { get; set; }
+        public int MaxNeighbors { get; set; }
 
         private int MaxParticlesPerCell { get; set; }
 
@@ -42,7 +43,7 @@ namespace PositionBasedDynamics.Collisions
 
         private Dictionary<int, HashEntry> GridMap { get; set; }
 
-        public ParticleHash3d(int numParticles, double cellSize, int maxNeighbors = 60, int maxParticlesPerCell = 50)
+        public ParticleHash3d(int numParticles, double cellSize, int maxNeighbors = 200, int maxParticlesPerCell = 50)
         {
 
             NumParticles = numParticles;
@@ -136,24 +137,30 @@ namespace PositionBasedDynamics.Collisions
             entry.Indices.Add(i);
         }
 
-        public void NeighborhoodSearch(List<Vector3d> particles)
+        public List<Particle> NeighborhoodSearch(List<Particle> particles)
         {
-
             if (particles.Count > NumParticles)
                 throw new ArgumentException("Particle array length larger than expected");
+
+            List<Vector3d> particlePos = new List<Vector3d>();
+            for (int i = 0; i < particles.Count; i++)
+            {
+                particlePos.Add(particles[i].Position);
+            }
 
             double r2 = CellSize * CellSize;
 
             for (int i = 0; i < NumParticles; i++)
             {
-                AddToGrid(i, particles[i]);
+                AddToGrid(i, particlePos[i]);
             }
 
             for (int i = 0; i < NumParticles; i++)
             {
                 NumNeighbors[i] = 0;
+                particles[i].NeighbourIndexes = new List<int>();
 
-                Vector3d p0 = particles[i];
+                Vector3d p0 = particlePos[i];
 
                 int cellPos1, cellPos2, cellPos3;
                 Floor(p0, out cellPos1, out cellPos2, out cellPos3);
@@ -174,16 +181,19 @@ namespace PositionBasedDynamics.Collisions
                             if (pi == i) continue;
 
                             Vector3d p;
-                            p.x = p0.x - particles[pi].x;
-                            p.y = p0.y - particles[pi].y;
-                            p.z = p0.z - particles[pi].z;
+                            p.x = p0.x - particlePos[pi].x;
+                            p.y = p0.y - particlePos[pi].y;
+                            p.z = p0.z - particlePos[pi].z;
 
                             double dist2 = p.x * p.x + p.y * p.y + p.z * p.z;
 
                             if (dist2 < r2)
                             {
-                                if (NumNeighbors[i] < MaxNeighbors)
+                                if (particles[i].NeighbourIndexes.Count < MaxNeighbors)
+                                {
                                     Neighbors[i, NumNeighbors[i]++] = pi;
+                                    particles[i].NeighbourIndexes.Add(pi);
+                                }
                                 else
                                     throw new InvalidOperationException("too many neighbors detected");
                             }
@@ -191,36 +201,51 @@ namespace PositionBasedDynamics.Collisions
                     }
                 }
             }
-
+            return particles;
             //end of function
         }
 
-        public void NeighborhoodSearch(List<Vector3d> particles, List<Vector3d> boundary)
+        //public void NeighborhoodSearch(List<Vector3d> particles, List<Vector3d> boundary)
+        public List<Particle> NeighborhoodSearch(List<Particle> particles1, List<Particle> particles2)
         {
 
-            if (particles.Count > NumParticles)
+            //Debug.Log("particles.Count" + particles.Count);
+            //Debug.Log("NumParticles" + NumParticles);
+            if (particles1.Count > NumParticles)
                 throw new ArgumentException("Particle array length larger than expected");
+
+            List<Vector3d> particlePos1 = new List<Vector3d>();
+            List<Vector3d> particlePos2 = new List<Vector3d>();
+            for (int i = 0; i < particles1.Count; i++)
+            {
+                particlePos1.Add(particles1[i].Position);
+            }
+            for (int i = 0; i < particles2.Count; i++)
+            {
+                particlePos2.Add(particles2[i].Position);
+            }
 
             //double invCellSize = 1.0 / CellSize;
             double r2 = CellSize * CellSize;
 
             for (int i = 0; i < NumParticles; i++)
             {
-                AddToGrid(i, particles[i]);
+                AddToGrid(i, particlePos1[i]);
             }
 
-            for (int i = 0; i < boundary.Count; i++)
+            for (int i = 0; i < particles2.Count; i++)
             {
-                AddToGrid(NumParticles + i, boundary[i]);
+                AddToGrid(NumParticles + i, particlePos2[i]);
             }
 
             for (int i = 0; i < NumParticles; i++)
             {
-                Vector3d p0 = particles[i];
+                Vector3d p0 = particlePos1[i];
                 NumNeighbors[i] = 0;
+                particles1[i].NeighbourIndexes = new List<int>();
 
                 int cellPos1, cellPos2, cellPos3;
-                Floor(particles[i], out cellPos1, out cellPos2, out cellPos3);
+                Floor(particlePos1[i], out cellPos1, out cellPos2, out cellPos3);
 
                 for (int j = 0; j < 27; j++)
                 {
@@ -242,9 +267,9 @@ namespace PositionBasedDynamics.Collisions
                             if (pi < NumParticles)
                             {
                                 Vector3d p;
-                                p.x = p0.x - particles[pi].x;
-                                p.y = p0.y - particles[pi].y;
-                                p.z = p0.z - particles[pi].z;
+                                p.x = p0.x - particlePos1[pi].x;
+                                p.y = p0.y - particlePos1[pi].y;
+                                p.z = p0.z - particlePos1[pi].z;
 
                                 dist2 = p.x * p.x + p.y * p.y + p.z * p.z;
                             }
@@ -253,9 +278,9 @@ namespace PositionBasedDynamics.Collisions
                                 int bi = pi - NumParticles;
 
                                 Vector3d p;
-                                p.x = p0.x - boundary[bi].x;
-                                p.y = p0.y - boundary[bi].y;
-                                p.z = p0.z - boundary[bi].z;
+                                p.x = p0.x - particlePos2[bi].x;
+                                p.y = p0.y - particlePos2[bi].y;
+                                p.z = p0.z - particlePos2[bi].z;
 
                                 dist2 = p.x * p.x + p.y * p.y + p.z * p.z;
                             }
@@ -263,7 +288,10 @@ namespace PositionBasedDynamics.Collisions
                             if (dist2 < r2)
                             {
                                 if (NumNeighbors[i] < MaxNeighbors)
+                                {
                                     Neighbors[i, NumNeighbors[i]++] = pi;
+                                    particles1[i].NeighbourIndexes.Add(pi);
+                                }
                                 else
                                     throw new InvalidOperationException("too many neighbors detected");
                             }
@@ -271,10 +299,9 @@ namespace PositionBasedDynamics.Collisions
                     }
                 }
             }
-
+            return particles1;
             //End of function
         }
     }
-
 
 }
