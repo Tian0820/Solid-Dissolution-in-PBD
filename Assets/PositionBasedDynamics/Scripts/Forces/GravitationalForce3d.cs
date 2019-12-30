@@ -15,7 +15,7 @@ namespace PositionBasedDynamics.Forces
 
         public GravitationalForce3d()
         {
-            Gravity = new Vector3d(0.0, -9.81, 0.0);
+            Gravity = new Vector3d(0.0, -20.81, 0.0);
         }
 
 		public GravitationalForce3d(Vector3d gravity)

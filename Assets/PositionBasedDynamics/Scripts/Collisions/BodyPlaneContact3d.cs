@@ -30,14 +30,14 @@ namespace PositionBasedDynamics.Collisions
 
         internal override void ResolveContact(double di)
         {
-            //double d = Vector3d.Dot(Normal, Body0.Predicted[i0]) + Distance - Body0.ParticleRadius;
+            double d = Vector3d.Dot(Normal, Body0.Particles[i0].Predicted) + Distance - Body0.Particles[0].ParticleRadius;
 
-            //if (d < 0.0)
-            //{
-            //    Vector3d delta = Normal * -d * di;
-            //    Body0.Positions[i0] += delta;
-            //    Body0.Predicted[i0] += delta;
-            //}
+            if (d < 0.0)
+            {
+                Vector3d delta = Normal * -d * di;
+                Body0.Particles[i0].Position += delta;
+                Body0.Particles[i0].Predicted += delta;
+            }
         }
 
     }

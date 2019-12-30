@@ -7,6 +7,7 @@ using Common.Mathematics.LinearAlgebra;
 
 using PositionBasedDynamics.Forces;
 using PositionBasedDynamics.Bodies;
+using PositionBasedDynamics.Collisions;
 
 namespace PositionBasedDynamics.Solvers
 {
@@ -34,7 +35,7 @@ namespace PositionBasedDynamics.Solvers
 
             if (dt == 0.0) return;
             
-            AppyExternalForces(dt);
+            ApplyExternalForces(dt);
 
             EstimatePositions(dt);
 
@@ -47,7 +48,7 @@ namespace PositionBasedDynamics.Solvers
             UpdatePositions();
         }
 
-        private void AppyExternalForces(double dt)
+        private void ApplyExternalForces(double dt)
         {
             for (int i = 0; i < Body.NumParticles; i++)
             {

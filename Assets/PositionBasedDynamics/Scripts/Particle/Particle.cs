@@ -31,6 +31,8 @@ namespace PositionBasedDynamics
 
         public ParticlePhase Phase { get; set; } // phase of this particle
 
+        public bool needTrans { get; set; }
+
         public Particle(Vector3d position, Vector3d predicted, Vector3d velocity, double radius,
             double mass, double staticDensity, ParticlePhase phase)
         {
@@ -44,6 +46,7 @@ namespace PositionBasedDynamics
             DynamicDensity = 0.0;
             //NeighbourIndexes = new int[MaxNeighbourNum];
             NeighbourIndexes = new List<int>();
+            needTrans = false;
             if (ParticleMass <= 0)
                 throw new ArgumentException("Particles mass <= 0");
 
@@ -63,6 +66,7 @@ namespace PositionBasedDynamics
             DynamicDensity = 0.0;
             //NeighbourIndexes = new int[MaxNeighbourNum];
             NeighbourIndexes = new List<int>();
+            needTrans = false;
             if (ParticleMass <= 0)
                 throw new ArgumentException("Particles mass <= 0");
 
@@ -81,6 +85,7 @@ namespace PositionBasedDynamics
             DynamicDensity = 0.0;
             //NeighbourIndexes = new int[MaxNeighbourNum];
             NeighbourIndexes = new List<int>();
+            needTrans = false;
             if (ParticleRadius <= 0)
                 throw new ArgumentException("Particles radius <= 0");
         }

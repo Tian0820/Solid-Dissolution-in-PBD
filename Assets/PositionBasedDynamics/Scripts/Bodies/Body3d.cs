@@ -44,13 +44,13 @@ namespace PositionBasedDynamics.Bodies
 
         public Body3d(int numParticles, double radius, double mass)
         {
-            InitBody3d(numParticles, radius, mass);
+            InitBody3d();
         }
 
         // particleAttr: density if FLUID, mass if RIGID
         public Body3d(ParticlePhase phase, ParticleSource source, double radius, double particleAttr, Matrix4x4d RTS)
         {
-            InitBody3d(source.NumParticles, radius, 1.0);
+            InitBody3d();
             if (phase == ParticlePhase.FLUID)
             {
                 for (int i = 0; i < source.NumParticles; i++)
@@ -65,12 +65,12 @@ namespace PositionBasedDynamics.Bodies
 
                 CreateParticles(source, RTS);
                 InitFluidAttr();
-            } else if (phase == ParticlePhase.RIGID)
+            } else if (phase == ParticlePhase.SOLID)
             {
                 for (int i = 0; i < source.NumParticles; i++)
                 {
                     double mass = particleAttr;
-                    Particle newParticle = new Particle(radius, mass, 0, ParticlePhase.RIGID);
+                    Particle newParticle = new Particle(radius, mass, 0, ParticlePhase.SOLID);
                     Particles.Add(newParticle);
                 }
 
@@ -81,7 +81,7 @@ namespace PositionBasedDynamics.Bodies
             }
         }
 
-        private void InitBody3d(int numParticles, double radius, double mass)
+        private void InitBody3d()
         {
             Particles = new List<Particle>();
             Constraints = new List<Constraint3d>();

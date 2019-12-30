@@ -11,7 +11,15 @@ namespace PositionBasedDynamics.Collisions
     internal abstract class CollisionContact3d
     {
 
-        internal abstract void ResolveContact(double di);
+        internal virtual void ResolveContact(double di)
+        {
+
+        }
+
+        internal virtual void ResolveContact(double di, bool isActive)
+        {
+
+        }
 
     }
 

@@ -5,6 +5,6 @@ using UnityEngine;
 public enum ParticlePhase
 {
     FLUID,
-    RIGID,
+    SOLID,
     BOUNDARY
 }

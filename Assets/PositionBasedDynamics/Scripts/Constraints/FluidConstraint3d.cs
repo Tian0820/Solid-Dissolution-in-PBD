@@ -76,7 +76,6 @@ namespace PositionBasedDynamics.Constraints
             // Di = SUMj Mj * W(Pi - Pj, h)
 
             // Compute current density for particle i
-            //fluid.Densities[i] = fluid.ParticleMass * fluid.Kernel.W_zero;
             fluid.Particles[i].DynamicDensity = fluid.Particles[0].ParticleMass * fluid.Kernel.W_zero;
 
             for (int j = 0; j < numNeighbors; j++)

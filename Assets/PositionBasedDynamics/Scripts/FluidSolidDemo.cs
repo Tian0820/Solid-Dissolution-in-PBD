@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 using Common.Mathematics.LinearAlgebra;
@@ -35,7 +36,9 @@ namespace PositionBasedDynamics
 
         private GameObject[] BoundarySpheres { get; set; }
 
-        private Body3d Body { get; set; }
+        private Body3d FluidBody { get; set; }
+
+        private Body3d SolidBody { get; set; }
 
         private FluidBoundary3d Boundary { get; set; }
 
@@ -43,11 +46,11 @@ namespace PositionBasedDynamics
 
         private List<Box3d> FluidBounds;
 
-        private Solver3d SolidSolver { get; set; }
+        private SolidSolver3d SolidSolver { get; set; }
 
         private FluidSolver3d FluidSolver { get; set; }
 
-        private List<List<GameObject>> SolidSpheres { get; set; }
+        private List<Dictionary<Particle, GameObject>> SolidSpheres { get; set; }
 
         // Start is called before the first frame update
         void Start()
@@ -108,7 +111,7 @@ namespace PositionBasedDynamics
             {
                 DrawLines.DrawBounds(camera, Color.blue, FluidBounds[i], m);
             }
-            //DrawLines.DrawGrid(camera, Color.white, min, max, 1, transform.localToWorldMatrix);
+            DrawLines.DrawGrid(camera, Color.white, min, max, 1, transform.localToWorldMatrix);
 
         }
 
@@ -120,7 +123,7 @@ namespace PositionBasedDynamics
             CreateBoundary(radius, density);
             CreateFluid(radius, density);
 
-            FluidSolver = new FluidSolver3d(Body);
+            FluidSolver = new FluidSolver3d(FluidBody);
             FluidSolver.AddForce(new GravitationalForce3d());
 
         }
@@ -143,13 +146,17 @@ namespace PositionBasedDynamics
             T = Matrix4x4d.Translate(new Vector3d(0.0, 10.0, 0.0));
             R = Matrix4x4d.Rotate(new Vector3d(0.0, 0.0, 25.0));
 
-            Body3d body = new Body3d(ParticlePhase.RIGID, source, radius, mass, T * R);
+            Body3d body = new Body3d(ParticlePhase.SOLID, source, radius, mass, T * R);
             body.Dampning = 1.0;
             body.RandomizePositions(rnd, radius * 0.01);
+            SolidBody = body;
 
-            SolidSolver = new Solver3d();
-            SolidSolver.AddBody(body);
+            SolidSolver = new SolidSolver3d();
+            SolidSolver.AddBody(SolidBody);
+            SolidSolver.FluidBody = FluidBody;
+
             SolidSolver.AddForce(new GravitationalForce3d());
+            SolidSolver.AddCollision(new ParticleCollision3d(0));
             SolidSolver.AddCollision(new PlanarCollision3d(Vector3d.UnitY, 0));
             SolidSolver.SolverIterations = 2;
             SolidSolver.CollisionIterations = 2;
@@ -209,23 +216,24 @@ namespace PositionBasedDynamics
 
             System.Random rnd = new System.Random(0);
 
-            Body3d body1 = new Body3d(ParticlePhase.FLUID, source1, radius, density, Matrix4x4d.Identity);
+            //Body3d body1 = new Body3d(ParticlePhase.FLUID, source1, radius, density, Matrix4x4d.Identity);
             Body3d body2 = new Body3d(ParticlePhase.FLUID, source2, radius, density, Matrix4x4d.Identity);
 
-            Body = body1.ContactBody3d(body2);
+            //Body = body1.ContactBody3d(body2);
+            FluidBody = body2;
 
-            Body.Dampning = 0.0;
-            Body.AddBoundry(Boundary);
-            Body.RandomizePositions(rnd, radius * 0.01);
-            Body.RandomizePositionOrder(rnd);
+            FluidBody.Dampning = 0.0;
+            FluidBody.AddBoundry(Boundary);
+            FluidBody.RandomizePositions(rnd, radius * 0.01);
+            FluidBody.RandomizePositionOrder(rnd);
 
-            FluidSpheres = new GameObject[Body.NumParticles];
+            FluidSpheres = new GameObject[FluidBody.NumParticles];
 
-            float diam = (float)Body.Particles[0].ParticleDiameter;
+            float diam = (float)FluidBody.Particles[0].ParticleDiameter;
 
             for (int i = 0; i < FluidSpheres.Length; i++)
             {
-                Vector3d pos = Body.Particles[i].Position;
+                Vector3d pos = FluidBody.Particles[i].Position;
 
                 GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 sphere.transform.parent = transform;
@@ -244,11 +252,11 @@ namespace PositionBasedDynamics
         {
             if (solidSphereMaterial == null) return;
 
-            SolidSpheres = new List<List<GameObject>>();
+            SolidSpheres = new List<Dictionary<Particle, GameObject>>();
 
-            for (int j = 0; j < SolidSolver.Bodies.Count; j++)
+            for (int j = 0; j < SolidSolver.SolidBodies.Count; j++)
             {
-                Body3d body = SolidSolver.Bodies[j];
+                Body3d body = SolidSolver.SolidBodies[j];
 
                 int numParticles = body.NumParticles;
 
@@ -256,7 +264,7 @@ namespace PositionBasedDynamics
 
                 float diam = (float)body.Particles[0].ParticleDiameter;
 
-                List<GameObject> spheres = new List<GameObject>(numParticles);
+                Dictionary<Particle, GameObject> spheres = new Dictionary<Particle, GameObject>(numParticles);
 
                 for (int i = 0; i < numParticles; i++)
                 {
@@ -268,7 +276,7 @@ namespace PositionBasedDynamics
                     sphere.transform.localScale = new Vector3(diam, diam, diam);
                     sphere.GetComponent<Collider>().enabled = false;
                     sphere.GetComponent<MeshRenderer>().material = solidSphereMaterial;
-                    spheres.Add(sphere);
+                    spheres[body.Particles[i]] = sphere;
                 }
                 SolidSpheres.Add(spheres);
             }
@@ -281,7 +289,7 @@ namespace PositionBasedDynamics
                 for (int i = 0; i < FluidSpheres.Length; i++)
                 {
                     //Debug.Log("Body positons: " + Body.Positions[i]);
-                    Vector3d pos = Body.Particles[i].Position;
+                    Vector3d pos = FluidBody.Particles[i].Position;
                     FluidSpheres[i].transform.position = new Vector3((float)pos.x, (float)pos.y, (float)pos.z);
                 }
             }
@@ -302,15 +310,20 @@ namespace PositionBasedDynamics
         {
             if (SolidSpheres != null)
             {
-                for (int j = 0; j < SolidSolver.Bodies.Count; j++)
+                for (int j = 0; j < SolidSolver.SolidBodies.Count; j++)
                 {
-                    Body3d body = SolidSolver.Bodies[j];
-                    List<GameObject> spheres = SolidSpheres[j];
+                    Body3d body = SolidSolver.SolidBodies[j];
+                    Dictionary<Particle, GameObject> spheres = SolidSpheres[j];
 
                     for (int i = 0; i < spheres.Count; i++)
                     {
                         Vector3d pos = body.Particles[i].Position;
-                        spheres[i].transform.position = new Vector3((float)pos.x, (float)pos.y, (float)pos.z);
+                        GameObject sphere = spheres[body.Particles[i]];
+                        sphere.transform.position = new Vector3((float)pos.x, (float)pos.y, (float)pos.z);
+                        if (body.Particles[i].needTrans == true)
+                        {
+                            sphere.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
+                        }
                     }
                 }
             }

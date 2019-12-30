@@ -10,7 +10,7 @@ using PositionBasedDynamics.Collisions;
 namespace PositionBasedDynamics.Solvers
 {
 
-    public class Solver3d
+    public class SolidSolver3d
     {
         public int SolverIterations { get; set; }
 
@@ -18,20 +18,24 @@ namespace PositionBasedDynamics.Solvers
 
         public double SleepThreshold { get; set; }
 
-        public List<Body3d> Bodies { get; private set; }
+        public List<Body3d> SolidBodies { get; private set; }
+
+        public Body3d FluidBody { get; set; }
 
         private List<ExternalForce3d> Forces { get; set; }
 
         private List<Collision3d> Collisions { get; set; }
 
-        public Solver3d()
+        private bool FluidSolidContactActive = true;
+
+        public SolidSolver3d()
         {
             SolverIterations = 4;
             CollisionIterations = 2;
 
             Forces = new List<ExternalForce3d>();
             Collisions = new List<Collision3d>();
-            Bodies = new List<Body3d>();
+            SolidBodies = new List<Body3d>();
         }
 
         public void AddForce(ExternalForce3d force)
@@ -48,8 +52,8 @@ namespace PositionBasedDynamics.Solvers
 
         public void AddBody(Body3d body)
         {
-            if (Bodies.Contains(body)) return;
-            Bodies.Add(body);
+            if (SolidBodies.Contains(body)) return;
+            SolidBodies.Add(body);
         }
 
         public void StepPhysics(double dt)
@@ -77,9 +81,9 @@ namespace PositionBasedDynamics.Solvers
         private void AppyExternalForces(double dt)
         {
 
-            for (int j = 0; j < Bodies.Count; j++)
+            for (int j = 0; j < SolidBodies.Count; j++)
             {
-                Body3d body = Bodies[j];
+                Body3d body = SolidBodies[j];
 
                 for (int i = 0; i < body.NumParticles; i++)
                 {
@@ -95,9 +99,9 @@ namespace PositionBasedDynamics.Solvers
 
         private void EstimatePositions(double dt)
         {
-            for (int j = 0; j < Bodies.Count; j++)
+            for (int j = 0; j < SolidBodies.Count; j++)
             {
-                Body3d body = Bodies[j];
+                Body3d body = SolidBodies[j];
 
                 for (int i = 0; i < body.NumParticles; i++)
                 {
@@ -108,9 +112,9 @@ namespace PositionBasedDynamics.Solvers
 
         private void UpdateBounds()
         {
-            for (int i = 0; i < Bodies.Count; i++)
+            for (int i = 0; i < SolidBodies.Count; i++)
             {
-                Bodies[i].UpdateBounds();
+                SolidBodies[i].UpdateBounds();
             }
         }
 
@@ -118,10 +122,16 @@ namespace PositionBasedDynamics.Solvers
         {
             List<CollisionContact3d> contacts = new List<CollisionContact3d>();
 
-            for (int i = 0; i < Collisions.Count; i++)
+            Collision3d fluidSolidCollision = Collisions[0];
+            Collision3d PlanarCollision = Collisions[1];
+
+            //for (int j = 0; j < SolidBodies.Count && FluidSolidContactActive; j++)
+            for (int j = 0; j < SolidBodies.Count; j++)
             {
-                Collisions[i].FindContacts(Bodies, contacts);
+                fluidSolidCollision.FindContacts(SolidBodies[j], FluidBody, contacts);
             }
+
+            FluidSolidContactActive = !PlanarCollision.FindContacts(SolidBodies, contacts);
 
             double di = 1.0 / CollisionIterations;
 
@@ -140,9 +150,9 @@ namespace PositionBasedDynamics.Solvers
 
             for (int i = 0; i < SolverIterations; i++)
             {
-                for (int j = 0; j < Bodies.Count; j++)
+                for (int j = 0; j < SolidBodies.Count; j++)
                 {
-                    Bodies[j].ConstrainPositions(di);
+                    SolidBodies[j].ConstrainPositions(di);
                 }
             }
         }
@@ -153,9 +163,9 @@ namespace PositionBasedDynamics.Solvers
             double threshold2 = SleepThreshold * dt;
             threshold2 *= threshold2;
 
-            for (int j = 0; j < Bodies.Count; j++)
+            for (int j = 0; j < SolidBodies.Count; j++)
             {
-                Body3d body = Bodies[j];
+                Body3d body = SolidBodies[j];
 
                 for (int i = 0; i < body.NumParticles; i++)
                 {
@@ -171,17 +181,17 @@ namespace PositionBasedDynamics.Solvers
 
         private void ConstrainVelocities()
         {
-            for (int i = 0; i < Bodies.Count; i++)
+            for (int i = 0; i < SolidBodies.Count; i++)
             {
-                Bodies[i].ConstrainVelocities();
+                SolidBodies[i].ConstrainVelocities();
             }
         }
 
         private void UpdatePositions()
         {
-            for (int j = 0; j < Bodies.Count; j++)
+            for (int j = 0; j < SolidBodies.Count; j++)
             {
-                Body3d body = Bodies[j];
+                Body3d body = SolidBodies[j];
 
                 for (int i = 0; i < body.NumParticles; i++)
                 {
