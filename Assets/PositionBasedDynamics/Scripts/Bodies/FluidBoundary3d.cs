@@ -49,7 +49,7 @@ namespace PositionBasedDynamics.Bodies
             for (int i = 0; i < NumParticles; i++)
             {
                 Vector4d pos = RTS * source.Positions[i].xyz1;
-                Particle newParticle = new Particle(radius, density, ParticlePhase.BOUNDARY);
+                Particle newParticle = new Particle(i, radius, density, ParticlePhase.BOUNDARY);
                 newParticle.Position = new Vector3d(pos.x, pos.y, pos.z);
                 Particles.Add(newParticle);
             }

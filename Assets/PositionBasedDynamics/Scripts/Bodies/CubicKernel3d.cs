@@ -117,7 +117,7 @@ namespace PositionBasedDynamics.Bodies
         {
 
             Vector3d res = Vector3d.Zero;
-            double rl = Math.Sqrt(x*x + y*y + z*z);
+            double rl = Math.Sqrt(x * x + y * y + z * z);
             double q = rl * InvRadius;
             double factor;
 

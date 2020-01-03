@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 using Common.Mathematics.LinearAlgebra;
 
@@ -20,14 +21,17 @@ namespace PositionBasedDynamics.Constraints
             Boundary = boundary;
         }
 
+        public void UpdateBody(Body3d body)
+        {
+            Body = body; 
+        }
+
         internal override void ConstrainPositions(double di)
         {
             Body3d fluid = Body as Body3d;
             if (fluid == null) return;
 
             fluid.Particles = fluid.FluidHash.NeighborhoodSearch(fluid.Particles, Boundary.Particles);
-            //int[,] neighbors = fluid.FluidHash.Neighbors;
-            //int[] numNeighbors = fluid.FluidHash.NumNeighbors;
             int[,] neighbors = new int[fluid.Particles.Count, fluid.FluidHash.MaxNeighbors];
             int[] numNeighbors = new int[fluid.Particles.Count];
             for (int i = 0; i < fluid.Particles.Count; i++)
@@ -46,6 +50,8 @@ namespace PositionBasedDynamics.Constraints
                 for (int i = 0; i < fluid.NumParticles; i++)
                 {
                     Vector3d pi = fluid.Particles[i].Predicted;
+                    //if (i >= 512)
+                    //    Debug.Log("ComputePBF " + iter + "; " + i + ": " + pi);
                     //Calculate density constraint. 
                     ComputePBFDensity(fluid, pi, i, numNeighbors[i], neighbors);
                     ComputePBFLagrangeMultiplier(fluid, pi, i, numNeighbors[i], neighbors);
@@ -58,8 +64,11 @@ namespace PositionBasedDynamics.Constraints
                 for (int i = 0; i < fluid.NumParticles; i++)
                 {
                     Vector3d pi = fluid.Particles[i].Predicted;
-                    fluid.Particles[i].Predicted += SolveDensityConstraint(fluid, pi, i, numNeighbors[i], neighbors);
+                    Vector3d result = SolveDensityConstraint(fluid, pi, i, numNeighbors[i], neighbors);
+                    fluid.Particles[i].Predicted += result;
                     //fluid.Particles[i].Predicted += SolveDensityConstraint(fluid, pi, i, fluid.Particles[i].NeighbourIndexes, fluid.Particles[i].NeighbourNum);
+                    //if (i >= 512)
+                    //    Debug.Log("SolveDensityConstraint " + iter + "; " + i + " : " + result);
                 }
 
                 iter++;
@@ -83,24 +92,23 @@ namespace PositionBasedDynamics.Constraints
                 int neighborIndex = neighbors[i, j];
                 if (neighborIndex < fluid.NumParticles) // Test if fluid particle
                 {
-                    //Vector3d pn = fluid.Predicted[neighborIndex];
-                    //fluid.Densities[i] += fluid.ParticleMass * fluid.Kernel.W(pi.x - pn.x, pi.y - pn.y, pi.z - pn.z);
                     Vector3d pn = fluid.Particles[neighborIndex].Predicted;
                     fluid.Particles[i].DynamicDensity += fluid.Particles[i].ParticleMass * fluid.Kernel.W(pi.x - pn.x, pi.y - pn.y, pi.z - pn.z);
+                    //if (i >= 512)
+                    //{
+                    //    Debug.Log("DynamicDensity " + i + " : " + fluid.Particles[i].DynamicDensity
+                    //        + "; " + pn + "; " + neighborIndex + "; " + fluid.Particles[neighborIndex].Position);
+                    //}
                 }
                 else
                 {
                     int k = neighborIndex - fluid.NumParticles;
 
-                    //Vector3d pn = Boundary.Positions[k];
-                    //fluid.Densities[i] += Boundary.Psi[k] * fluid.Kernel.W(pi.x - pn.x, pi.y - pn.y, pi.z - pn.z);
                     Vector3d pn = Boundary.Particles[k].Position;
                     fluid.Particles[i].DynamicDensity += Boundary.Particles[k].BoundaryPsi * fluid.Kernel.W(pi.x - pn.x, pi.y - pn.y, pi.z - pn.z);
                 }
             }
 
-            //double maxDensity = fluid.Densities[i];
-            //if (fluid.Density > maxDensity) maxDensity = fluid.Density;
             double maxDensity = fluid.Particles[i].DynamicDensity;
             double staticDensity = fluid.Particles[i].StaticDensity;
             if (staticDensity > maxDensity) maxDensity = staticDensity;
@@ -204,6 +212,7 @@ namespace PositionBasedDynamics.Constraints
 
             for (int j = 0; j < numNeighbors; j++)
             {
+                
                 int neighborIndex = neighbors[i, j];
                 if (neighborIndex < fluid.NumParticles) // Test if fluid particle
                 {
@@ -215,6 +224,10 @@ namespace PositionBasedDynamics.Constraints
                     corr.x -= lambda * gradW.x;
                     corr.y -= lambda * gradW.y;
                     corr.z -= lambda * gradW.z;
+
+                    //if (i >= 512)
+                    //    Debug.Log(i + "; " + j + "; " + neighborIndex + "; "
+                    //        + gradW + ";" + lambda + "; " + corr);
                 }
                 else
                 {

@@ -31,7 +31,8 @@ namespace PositionBasedDynamics.Collisions
                     if (d < 0.0)
                     {
                         contacts.Add(new FluidSolidContact3d(body1, i0, body2, i1));
-                        body1.Particles[i0].needTrans = true;
+                        //if (body1.Particles[i0].Phase.Equals(ParticlePhase.SOLID) && body2.Particles[i1].Phase.Equals(ParticlePhase.FLUID))
+                            body1.Particles[i0].needTrans = true;
                     }
                 }
             }

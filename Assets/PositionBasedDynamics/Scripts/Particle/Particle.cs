@@ -7,6 +7,8 @@ namespace PositionBasedDynamics
 {
     public class Particle
     {
+        public int Index { get; set; }
+
         public Vector3d Position { get; set; }
 
         public Vector3d Predicted { get; set; }
@@ -33,9 +35,10 @@ namespace PositionBasedDynamics
 
         public bool needTrans { get; set; }
 
-        public Particle(Vector3d position, Vector3d predicted, Vector3d velocity, double radius,
+        public Particle(int index, Vector3d position, Vector3d predicted, Vector3d velocity, double radius,
             double mass, double staticDensity, ParticlePhase phase)
         {
+            Index = index;
             Position = position;
             Predicted = predicted;
             Velocity = velocity;
@@ -54,8 +57,9 @@ namespace PositionBasedDynamics
                 throw new ArgumentException("Particles radius <= 0");
         }
 
-        public Particle(double radius, double mass, double staticDensity, ParticlePhase phase)
+        public Particle(int index, double radius, double mass, double staticDensity, ParticlePhase phase)
         {
+            Index = index;
             Position = new Vector3d(0, 0, 0);
             Predicted = new Vector3d(0, 0, 0);
             Velocity = new Vector3d(0, 0, 0);
@@ -74,8 +78,9 @@ namespace PositionBasedDynamics
                 throw new ArgumentException("Particles radius <= 0");
         }
 
-        public Particle(double radius, double staticDensity, ParticlePhase phase)
+        public Particle(int index, double radius, double staticDensity, ParticlePhase phase)
         {
+            Index = index;
             Position = new Vector3d(0, 0, 0);
             Predicted = new Vector3d(0, 0, 0);
             Velocity = new Vector3d(0, 0, 0);

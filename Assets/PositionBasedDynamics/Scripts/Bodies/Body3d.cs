@@ -20,7 +20,7 @@ namespace PositionBasedDynamics.Bodies
 
         public double Viscosity { get; set; }
 
-        public double[] Lambda { get; private set; }
+        public List<double> Lambda { get; private set; }
 
         internal CubicKernel3d Kernel { get; private set; }
 
@@ -38,7 +38,7 @@ namespace PositionBasedDynamics.Bodies
 
         public Box3d Bounds { get; private set; }
 
-        public List<Constraint3d> Constraints { get; set; }
+        public Dictionary<String, Constraint3d> Constraints { get; set; }
 
         private List<StaticConstraint3d> StaticConstraints { get; set; }
 
@@ -56,7 +56,7 @@ namespace PositionBasedDynamics.Bodies
                 for (int i = 0; i < source.NumParticles; i++)
                 {
                     double d = radius * 2;
-                    Particle newParticle = new Particle(radius, 0.8 * d * d * d * particleAttr, particleAttr, ParticlePhase.FLUID);
+                    Particle newParticle = new Particle(i, radius, 0.8 * d * d * d * particleAttr, particleAttr, ParticlePhase.FLUID);
                     Particles.Add(newParticle);
                 }
                 Viscosity = 0.02;
@@ -70,21 +70,21 @@ namespace PositionBasedDynamics.Bodies
                 for (int i = 0; i < source.NumParticles; i++)
                 {
                     double mass = particleAttr;
-                    Particle newParticle = new Particle(radius, mass, 0, ParticlePhase.SOLID);
+                    Particle newParticle = new Particle(i, radius, mass, 0, ParticlePhase.SOLID);
                     Particles.Add(newParticle);
                 }
 
                 Stiffness = 1.0;
 
                 CreateParticles(source, RTS);
-                Constraints.Add(new ShapeMatchingConstraint3d(this, particleAttr, Stiffness));
+                //Constraints["ShapeMatchingConstraint3d"] = new ShapeMatchingConstraint3d(this, particleAttr, Stiffness);
             }
         }
 
         private void InitBody3d()
         {
             Particles = new List<Particle>();
-            Constraints = new List<Constraint3d>();
+            Constraints = new Dictionary<string, Constraint3d>();
             StaticConstraints = new List<StaticConstraint3d>();
             Dampning = 1;
         }
@@ -96,7 +96,7 @@ namespace PositionBasedDynamics.Bodies
 
             FluidHash = new ParticleHash3d(NumParticles, cellSize);
 
-            Lambda = new double[NumParticles];
+            Lambda = Enumerable.Repeat(0.0, NumParticles).ToList();
         }
 
         public Body3d ContactBody3d(Body3d body)
@@ -105,19 +105,42 @@ namespace PositionBasedDynamics.Bodies
 
             newBody.Particles.AddRange(body.Particles);
 
-            newBody.Constraints.AddRange(body.Constraints);
-            newBody.StaticConstraints.AddRange(body.StaticConstraints);
+            //newBody.Constraints.AddRange(body.Constraints);
+            //newBody.StaticConstraints.AddRange(body.StaticConstraints);
             newBody.FluidHash = new ParticleHash3d(newBody.NumParticles, newBody.Particles[0].ParticleRadius * 4.0);
-            newBody.Lambda = new double[newBody.NumParticles];
+            newBody.Lambda = Enumerable.Repeat(0.0, newBody.NumParticles).ToList();
 
             return newBody;
+        }
+
+        public void ContactParticle(List<Particle> particles)
+        {
+            for (int i = 0; i < particles.Count; i++)
+            {
+                if (!FindTransedParticle(particles[i].Index))
+                {
+                    Debug.Log("mass: " + particles[i].ParticleMass);
+                    particles[i].Phase = ParticlePhase.TRANSED;
+                    particles[i].Velocity = new Vector3d(0, 0, 0);
+                    particles[i].DynamicDensity = 0.0;
+                    particles[i].StaticDensity = Particles[0].StaticDensity;
+                    //TODO modify mass
+                    particles[i].ParticleMass = 10;
+                    particles[i].ParticleRadius = Particles[0].ParticleRadius;
+
+                    Debug.Log("mass modified: " + particles[i].ParticleMass);
+                    Lambda.Add(0.0);
+                    Particles.Add(particles[i]);
+                }
+            }
+            UpdateConstrains();
         }
 
         internal void ConstrainPositions(double di)
         {
             for (int i = 0; i < Constraints.Count; i++)
             {
-                Constraints[i].ConstrainPositions(di);
+                Constraints.Values.ToList()[i].ConstrainPositions(di);
             }
 
             for (int i = 0; i < StaticConstraints.Count; i++)
@@ -131,7 +154,7 @@ namespace PositionBasedDynamics.Bodies
 
             for (int i = 0; i < Constraints.Count; i++)
             {
-                Constraints[i].ConstrainVelocities();
+                Constraints.Values.ToList()[i].ConstrainVelocities();
             }
 
             for (int i = 0; i < StaticConstraints.Count; i++)
@@ -151,24 +174,6 @@ namespace PositionBasedDynamics.Bodies
 
                 Particles[i].Position += new Vector3d(rx, ry, rz) * amount;
             }
-        }
-
-        public void RandomizeConstraintOrder(System.Random rnd)
-        {
-            int count = Constraints.Count;
-            if (count <= 1) return;
-
-            List<Constraint3d> tmp = new List<Constraint3d>();
-
-            while (tmp.Count != count)
-            {
-                int i = rnd.Next(0, Constraints.Count - 1);
-
-                tmp.Add(Constraints[i]);
-                Constraints.RemoveAt(i);
-            }
-
-            Constraints = tmp;
         }
 
         public void MarkAsStatic(Box3d bounds)
@@ -206,11 +211,19 @@ namespace PositionBasedDynamics.Bodies
             Bounds = new Box3d(min, max);
         }
 
-        public void AddBoundry(FluidBoundary3d boundry)
+        public void AddBoundary(FluidBoundary3d boundary)
         {
-            FluidConstraint3d constraint = new FluidConstraint3d(this, boundry);
+            FluidConstraint3d constraint = new FluidConstraint3d(this, boundary);
+            Constraints["FluidConstraint3d"] = constraint;
+        }
 
-            Constraints.Add(constraint);
+        public void UpdateConstrains()
+        {
+            FluidConstraint3d constraint = (FluidConstraint3d)Constraints["FluidConstraint3d"];
+            if(constraint == null)
+                throw new InvalidOperationException("there is no fluid constraint");
+
+            constraint.UpdateBody(this);
         }
 
         internal void Reset()
@@ -219,7 +232,6 @@ namespace PositionBasedDynamics.Bodies
             {
                 Lambda[i] = 0.0;
                 Particles[i].DynamicDensity = 0.0;
-                //Densities[i] = 0.0;
             }
         }
 
@@ -284,6 +296,30 @@ namespace PositionBasedDynamics.Bodies
                 Particles[i].Predicted = Particles[i].Position;
             }
 
+        }
+
+        private List<int> GetParticleIndexes()
+        {
+            List<int> indexes = new List<int>();
+            for(int i = 0; i < NumParticles; i++)
+            {
+                indexes.Add(Particles[i].Index);
+            }
+            return indexes;
+        }
+
+        private bool FindTransedParticle(int index)
+        {
+            bool exist = false;
+            for (int i = 0; i < NumParticles; i++)
+            {
+                if (Particles[i].Index == index && Particles[i].Phase.Equals(ParticlePhase.TRANSED))
+                {
+                    exist = true;
+                    break;
+                }
+            }
+            return exist;
         }
     }
 

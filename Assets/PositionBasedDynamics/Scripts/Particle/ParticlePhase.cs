@@ -6,5 +6,6 @@ public enum ParticlePhase
 {
     FLUID,
     SOLID,
-    BOUNDARY
+    BOUNDARY,
+    TRANSED
 }

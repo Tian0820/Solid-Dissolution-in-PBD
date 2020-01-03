@@ -32,13 +32,13 @@ namespace PositionBasedDynamics
 
         public bool drawBoundary = false;
 
-        private GameObject[] FluidSpheres { get; set; }
+        private List<GameObject> FluidSpheres { get; set; }
 
         private GameObject[] BoundarySpheres { get; set; }
 
         private Body3d FluidBody { get; set; }
 
-        private Body3d SolidBody { get; set; }
+        //private Body3d SolidBody { get; set; }
 
         private FluidBoundary3d Boundary { get; set; }
 
@@ -50,7 +50,7 @@ namespace PositionBasedDynamics
 
         private FluidSolver3d FluidSolver { get; set; }
 
-        private List<Dictionary<Particle, GameObject>> SolidSpheres { get; set; }
+        private List<List<GameObject>> SolidSpheres { get; set; }
 
         // Start is called before the first frame update
         void Start()
@@ -62,16 +62,20 @@ namespace PositionBasedDynamics
         // Update is called once per frame
         void Update()
         {
-            FluidSolver.StepPhysics(timeStep);
-
             int iterations = 4;
             double dt = timeStep / iterations;
 
-            for (int i = 0; i < iterations; i++)
+            for (int i = 0; i < iterations && SolidExist(); i++)
+            {
                 SolidSolver.StepPhysics(dt);
+                FluidSolver.UpdateParticleToTrans(SolidSolver.ParticleToTrans);
+                SolidSolver.FluidBody = FluidSolver.Body;
+            }
 
-            UpdateFluidSpheres();
+            FluidSolver.StepPhysics(timeStep);
+
             UpdateSolidSpheres();
+            UpdateFluidSpheres();
         }
 
         void OnDestroy()
@@ -79,7 +83,7 @@ namespace PositionBasedDynamics
 
             if (FluidSpheres != null)
             {
-                for (int i = 0; i < FluidSpheres.Length; i++)
+                for (int i = 0; i < FluidSpheres.Count; i++)
                 {
                     DestroyImmediate(FluidSpheres[i]);
                     FluidSpheres[i] = null;
@@ -149,10 +153,9 @@ namespace PositionBasedDynamics
             Body3d body = new Body3d(ParticlePhase.SOLID, source, radius, mass, T * R);
             body.Dampning = 1.0;
             body.RandomizePositions(rnd, radius * 0.01);
-            SolidBody = body;
 
             SolidSolver = new SolidSolver3d();
-            SolidSolver.AddBody(SolidBody);
+            SolidSolver.AddBody(body);
             SolidSolver.FluidBody = FluidBody;
 
             SolidSolver.AddForce(new GravitationalForce3d());
@@ -168,7 +171,7 @@ namespace PositionBasedDynamics
         public void CreateBoundary(double radius, double density)
         {
 
-            InnerBounds = new Box3d(-3, 3, 0, 8, -3, 3);
+            InnerBounds = new Box3d(-2, 2, 0, 8, -2, 2);
             OuterBounds = InnerBounds;
 
             int thickness = 1;
@@ -208,11 +211,11 @@ namespace PositionBasedDynamics
 
             //FluidBounds = new Box3d(-3, 3, 0, 5, -3, 3);
             FluidBounds = new List<Box3d>();
-            FluidBounds.Add(new Box3d(-1, 1, 4, 6, -1, 1));
-            FluidBounds.Add(new Box3d(-3, 3, 0, 3, -3, 3));
+            //FluidBounds.Add(new Box3d(-1, 1, 4, 6, -1, 1));
+            FluidBounds.Add(new Box3d(-2, 2, 0, 4, -2, 2));
 
-            ParticlesFromBounds source1 = new ParticlesFromBounds(radius, FluidBounds[0]);
-            ParticlesFromBounds source2 = new ParticlesFromBounds(radius, FluidBounds[1]);
+            //ParticlesFromBounds source1 = new ParticlesFromBounds(radius, FluidBounds[0]);
+            ParticlesFromBounds source2 = new ParticlesFromBounds(radius, FluidBounds[0]);
 
             System.Random rnd = new System.Random(0);
 
@@ -223,15 +226,15 @@ namespace PositionBasedDynamics
             FluidBody = body2;
 
             FluidBody.Dampning = 0.0;
-            FluidBody.AddBoundry(Boundary);
+            FluidBody.AddBoundary(Boundary);
             FluidBody.RandomizePositions(rnd, radius * 0.01);
             FluidBody.RandomizePositionOrder(rnd);
 
-            FluidSpheres = new GameObject[FluidBody.NumParticles];
+            FluidSpheres = new List<GameObject>();
 
             float diam = (float)FluidBody.Particles[0].ParticleDiameter;
 
-            for (int i = 0; i < FluidSpheres.Length; i++)
+            for (int i = 0; i < FluidBody.Particles.Count; i++)
             {
                 Vector3d pos = FluidBody.Particles[i].Position;
 
@@ -243,7 +246,7 @@ namespace PositionBasedDynamics
 
                 sphere.GetComponent<MeshRenderer>().material = fluidSphereMaterial;
 
-                FluidSpheres[i] = sphere;
+                FluidSpheres.Add(sphere);
             }
 
         }
@@ -252,7 +255,7 @@ namespace PositionBasedDynamics
         {
             if (solidSphereMaterial == null) return;
 
-            SolidSpheres = new List<Dictionary<Particle, GameObject>>();
+            SolidSpheres = new List<List<GameObject>>();
 
             for (int j = 0; j < SolidSolver.SolidBodies.Count; j++)
             {
@@ -264,7 +267,7 @@ namespace PositionBasedDynamics
 
                 float diam = (float)body.Particles[0].ParticleDiameter;
 
-                Dictionary<Particle, GameObject> spheres = new Dictionary<Particle, GameObject>(numParticles);
+                List<GameObject> spheres = new List<GameObject>(numParticles);
 
                 for (int i = 0; i < numParticles; i++)
                 {
@@ -276,7 +279,7 @@ namespace PositionBasedDynamics
                     sphere.transform.localScale = new Vector3(diam, diam, diam);
                     sphere.GetComponent<Collider>().enabled = false;
                     sphere.GetComponent<MeshRenderer>().material = solidSphereMaterial;
-                    spheres[body.Particles[i]] = sphere;
+                    spheres.Add(sphere);
                 }
                 SolidSpheres.Add(spheres);
             }
@@ -286,10 +289,29 @@ namespace PositionBasedDynamics
         {
             if (FluidSpheres != null)
             {
-                for (int i = 0; i < FluidSpheres.Length; i++)
+                if (FluidSpheres.Count != FluidSolver.Body.NumParticles)
+                {
+                    Debug.Log("Transform: " + FluidSpheres.Count + ", " + FluidSolver.Body.NumParticles);
+                    for (int i = FluidSpheres.Count; i < FluidSolver.Body.NumParticles; i++)
+                    {
+                        Particle addParticle = FluidSolver.Body.Particles[i];
+                        float diam = (float)addParticle.ParticleDiameter;
+                        Vector3d pos = addParticle.Position;
+                        GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                        sphere.transform.parent = transform;
+                        sphere.transform.position = new Vector3((float)pos.x, (float)pos.y, (float)pos.z);
+                        sphere.transform.localScale = new Vector3(diam, diam, diam);
+                        sphere.GetComponent<Collider>().enabled = false;
+                        sphere.GetComponent<MeshRenderer>().material = fluidSphereMaterial;
+                        FluidSpheres.Add(sphere);
+                    }
+                }
+
+                for (int i = 0; i < FluidSolver.Body.NumParticles; i++)
                 {
                     //Debug.Log("Body positons: " + Body.Positions[i]);
-                    Vector3d pos = FluidBody.Particles[i].Position;
+                    Vector3d pos = FluidSolver.Body.Particles[i].Position;
+                    //Debug.Log(FluidSolver.Body.Particles[i].Position);
                     FluidSpheres[i].transform.position = new Vector3((float)pos.x, (float)pos.y, (float)pos.z);
                 }
             }
@@ -313,20 +335,51 @@ namespace PositionBasedDynamics
                 for (int j = 0; j < SolidSolver.SolidBodies.Count; j++)
                 {
                     Body3d body = SolidSolver.SolidBodies[j];
-                    Dictionary<Particle, GameObject> spheres = SolidSpheres[j];
+                    List<GameObject> spheres = SolidSpheres[j];
+                    List<int> particleIndex = new List<int>();
+                    int originCount = spheres.Count;
 
-                    for (int i = 0; i < spheres.Count; i++)
+                    for (int i = 0; i < body.Particles.Count; i++)
                     {
-                        Vector3d pos = body.Particles[i].Position;
-                        GameObject sphere = spheres[body.Particles[i]];
-                        sphere.transform.position = new Vector3((float)pos.x, (float)pos.y, (float)pos.z);
-                        if (body.Particles[i].needTrans == true)
+                        particleIndex.Add(body.Particles[i].Index);
+                    }
+
+                    for (int i = 0; i < originCount; i++)
+                    {
+                        if (!particleIndex.Contains(i))
                         {
-                            sphere.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
+                            //if (i <= 1)
+                            //    break;
+                            //sphere.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
+                            //Debug.Log("not contain particle no. " + i);
+                            spheres[i].SetActive(false);
                         }
+                    }
+
+                    //Debug.Log("sphere count: " + spheres.Count + "; " + body.Particles.Count);
+
+                    for (int i = 0; i < body.Particles.Count; i++)
+                    {
+                        //Debug.Log("particleIndex. " + particleIndex[i]);
+                        GameObject sphere = spheres[particleIndex[i]];
+                        Vector3d pos = body.Particles[i].Position;
+                        sphere.transform.position = new Vector3((float)pos.x, (float)pos.y, (float)pos.z);
                     }
                 }
             }
+        }
+
+        private bool SolidExist()
+        {
+            bool exist = true;
+            for (int i = 0; i < SolidSolver.SolidBodies.Count; i++)
+            {
+                if (SolidSolver.SolidBodies[i].NumParticles == 0)
+                {
+                    exist = false;
+                }
+            }
+            return exist;
         }
 
     }

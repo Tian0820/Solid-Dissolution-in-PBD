@@ -15,7 +15,9 @@ namespace PositionBasedDynamics.Solvers
     public class FluidSolver3d
     {
 
-        private Body3d Body { get; set; }
+        public Body3d Body { get; set; }
+
+        public List<Particle> ParticleToTrans { get; set; }
 
         private List<ExternalForce3d> Forces { get; set; }
 
@@ -23,6 +25,13 @@ namespace PositionBasedDynamics.Solvers
         {
             Body = body;
             Forces = new List<ExternalForce3d>();
+            ParticleToTrans = new List<Particle>();
+        }
+
+        public void UpdateParticleToTrans(List<Particle> particles)
+        {
+            ParticleToTrans = particles;
+            Body.ContactParticle(ParticleToTrans);
         }
 
         public void AddForce(ExternalForce3d force)
@@ -66,6 +75,7 @@ namespace PositionBasedDynamics.Solvers
             for (int i = 0; i < Body.NumParticles; i++)
             {
                 Body.Particles[i].Predicted = Body.Particles[i].Position + dt * Body.Particles[i].Velocity;
+                //Debug.Log("EstimatePositions: " + Body.Particles[i].Velocity);
             }
         }
 

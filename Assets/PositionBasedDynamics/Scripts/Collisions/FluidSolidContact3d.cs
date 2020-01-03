@@ -1,5 +1,6 @@
 ﻿using System;
 using Common.Mathematics.LinearAlgebra;
+using UnityEngine;
 
 using PositionBasedDynamics.Bodies;
 
@@ -49,6 +50,7 @@ namespace PositionBasedDynamics.Collisions
 
                 SolidBody.Particles[i1].Predicted -= delta * Mass1;
                 SolidBody.Particles[i1].Position -= delta * Mass1;
+
             }
         }
 

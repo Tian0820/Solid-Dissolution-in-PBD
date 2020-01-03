@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 using Common.Mathematics.LinearAlgebra;
 
@@ -22,17 +23,23 @@ namespace PositionBasedDynamics.Solvers
 
         public Body3d FluidBody { get; set; }
 
+        public List<Particle> ParticleToTrans { get; set; }
+
         private List<ExternalForce3d> Forces { get; set; }
 
         private List<Collision3d> Collisions { get; set; }
 
         private bool FluidSolidContactActive = true;
 
+        private int IterNum;
+
         public SolidSolver3d()
         {
             SolverIterations = 4;
             CollisionIterations = 2;
+            IterNum = 1;
 
+            ParticleToTrans = new List<Particle>();
             Forces = new List<ExternalForce3d>();
             Collisions = new List<Collision3d>();
             SolidBodies = new List<Body3d>();
@@ -68,6 +75,9 @@ namespace PositionBasedDynamics.Solvers
 
             ResolveCollisions();
 
+            if (IterNum % 5 == 0)
+                TransformParticles();
+
             ConstrainPositions();
 
             UpdateVelocities(dt);
@@ -75,6 +85,8 @@ namespace PositionBasedDynamics.Solvers
             UpdatePositions();
 
             UpdateBounds();
+
+            IterNum++;
 
         }
 
@@ -125,8 +137,8 @@ namespace PositionBasedDynamics.Solvers
             Collision3d fluidSolidCollision = Collisions[0];
             Collision3d PlanarCollision = Collisions[1];
 
-            //for (int j = 0; j < SolidBodies.Count && FluidSolidContactActive; j++)
-            for (int j = 0; j < SolidBodies.Count; j++)
+            for (int j = 0; j < SolidBodies.Count && FluidSolidContactActive; j++)
+            //for (int j = 0; j < SolidBodies.Count; j++)
             {
                 fluidSolidCollision.FindContacts(SolidBodies[j], FluidBody, contacts);
             }
@@ -140,6 +152,28 @@ namespace PositionBasedDynamics.Solvers
                 for (int j = 0; j < contacts.Count; j++)
                 {
                     contacts[j].ResolveContact(di);
+                }
+            }
+        }
+
+        private void TransformParticles()
+        {
+            int transNum = 0;
+            for (int i = 0; i < SolidBodies.Count; i++)
+            {
+                for (int j = 0; j < SolidBodies[i].Particles.Count; j++)
+                {
+                    if (SolidBodies[i].Particles[j].needTrans && !SolidBodies[i].Particles[j].Phase.Equals(ParticlePhase.TRANSED))
+                    {
+                        //Debug.Log("Remove particle " + SolidBodies[i].Particles[j].Index);
+                        if (transNum == 5)
+                        {
+                            break;
+                        }
+                        ParticleToTrans.Add(SolidBodies[i].Particles[j]);
+                        SolidBodies[i].Particles.RemoveAt(j);
+                        transNum++;
+                    }
                 }
             }
         }

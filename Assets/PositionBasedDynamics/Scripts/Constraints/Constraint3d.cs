@@ -11,7 +11,7 @@ namespace PositionBasedDynamics.Constraints
     public abstract class Constraint3d
     {
 
-        protected Body3d Body { get; private set; }
+        protected Body3d Body { get; set; }
 
         internal Constraint3d(Body3d body)
         {
