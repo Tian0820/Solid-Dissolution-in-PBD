@@ -26,8 +26,6 @@ namespace PositionBasedDynamics.Bodies
 
         internal ParticleHash3d FluidHash { get; private set; }
 
-        internal ParticleHash3d RigidHash { get; private set; }
-
         public int NumParticles { get { return Particles.Count; } }
 
         public int NumConstraints { get { return Constraints.Count; } }

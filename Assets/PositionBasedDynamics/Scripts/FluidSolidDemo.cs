@@ -279,6 +279,8 @@ namespace PositionBasedDynamics
 
             float diam = (float)FluidBody.Particles[0].ParticleDiameter;
 
+            Debug.Log(FluidBody.Particles.Count);
+
             for (int i = 0; i < FluidBody.Particles.Count; i++)
             {
                 Vector3d pos = FluidBody.Particles[i].Position;
