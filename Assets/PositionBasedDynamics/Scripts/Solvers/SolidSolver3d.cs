@@ -23,6 +23,8 @@ namespace PositionBasedDynamics.Solvers
 
         public Body3d FluidBody { get; set; }
 
+        public int DissolutionRate { get; set; }
+
         public List<Particle> ParticleToTrans { get; set; }
 
         private List<ExternalForce3d> Forces { get; set; }
@@ -75,7 +77,7 @@ namespace PositionBasedDynamics.Solvers
 
             ResolveCollisions();
 
-            if (IterNum % 5 == 0)
+            if (IterNum % DissolutionRate == 0)
                 TransformParticles();
 
             ConstrainPositions();

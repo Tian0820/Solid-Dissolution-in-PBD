@@ -33,6 +33,8 @@ namespace PositionBasedDynamics
 
         public ParticlePhase Phase { get; set; } // phase of this particle
 
+        public Vector4d Color = new Vector4d(0.2f, 0.7f, 1, 0.1f);
+
         public bool needTrans { get; set; }
 
         public Particle(int index, Vector3d position, Vector3d predicted, Vector3d velocity, double radius,

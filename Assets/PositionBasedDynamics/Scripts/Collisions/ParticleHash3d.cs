@@ -289,8 +289,8 @@ namespace PositionBasedDynamics.Collisions
 
                             if (dist2 < r2)
                             {
-                                if ((pi < numParticles && particles1[pi].Phase.Equals(ParticlePhase.FLUID)) ||
-                                    (pi >= numParticles && particles2[pi - numParticles].Phase.Equals(ParticlePhase.BOUNDARY)))
+                                //if ((pi < numParticles && particles1[pi].Phase.Equals(ParticlePhase.FLUID)) ||
+                                //    (pi >= numParticles && particles2[pi - numParticles].Phase.Equals(ParticlePhase.BOUNDARY)))
                                 {
                                     if (particles1[i].NeighbourIndexes.Count < MaxNeighbors)
                                     {

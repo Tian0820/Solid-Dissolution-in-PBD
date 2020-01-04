@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 using Common.Mathematics.LinearAlgebra;
 using Common.Geometry.Shapes;
@@ -18,19 +19,33 @@ namespace PositionBasedDynamics
 {
     public class FluidSolidDemo : MonoBehaviour
     {
+        [SerializeField]
+        Dropdown m_RateDropdown;
+
+        [SerializeField]
+        Dropdown m_ViewDropdown;
+
+        [SerializeField]
+        Material m_FluidSphereMaterial_Standard;
+
+        [SerializeField]
+        Material m_FluidSphereMaterial_Transparent;
+
+        [SerializeField]
+        Material m_SolidSphereMaterial;
+
+        [SerializeField]
+        Material m_BoundaryMaterial;
+
         private const double timeStep = 1.0 / 60.0;
 
         private const int GRID_SIZE = 10;
 
-        public Material fluidSphereMaterial;
-
-        public Material solidSphereMaterial;
-
-        public Material boundaryMaterial;
-
         public bool drawLines = true;
 
         public bool drawBoundary = false;
+
+        public int DissolutionRate = 10;
 
         private List<GameObject> FluidSpheres { get; set; }
 
@@ -52,11 +67,27 @@ namespace PositionBasedDynamics
 
         private List<List<GameObject>> SolidSpheres { get; set; }
 
+        private ViewType View = ViewType.NORMAL;
+
+        enum ViewType
+        {
+            NORMAL,
+            CLEAR
+        }
+
         // Start is called before the first frame update
         void Start()
         {
             InitializeFluid();
             InitializeSolid();
+
+            m_RateDropdown.onValueChanged.AddListener(delegate {
+                RateDropdownValueChanged(m_RateDropdown);
+            });
+
+            m_ViewDropdown.onValueChanged.AddListener(delegate {
+                ViewDropdownValueChanged(m_ViewDropdown);
+            });
         }
 
         // Update is called once per frame
@@ -99,6 +130,18 @@ namespace PositionBasedDynamics
                 }
             }
 
+            if (SolidSpheres != null)
+            {
+                for (int i = 0; i < SolidSpheres.Count; i++)
+                {
+                    for (int j = 0; j < SolidSpheres[i].Count; j++)
+                    {
+                        DestroyImmediate(SolidSpheres[i][j]);
+                        SolidSpheres[i][j] = null;
+                    }
+                }
+            }
+
         }
 
         private void OnRenderObject()
@@ -109,13 +152,13 @@ namespace PositionBasedDynamics
             Vector3 max = new Vector3(GRID_SIZE, 0, GRID_SIZE);
 
             Matrix4x4d m = MathConverter.ToMatrix4x4d(transform.localToWorldMatrix);
-            DrawLines.DrawBounds(camera, Color.red, OuterBounds, m);
-            DrawLines.DrawBounds(camera, Color.red, InnerBounds, m);
-            for (int i = 0; i < FluidBounds.Count; i++)
-            {
-                DrawLines.DrawBounds(camera, Color.blue, FluidBounds[i], m);
-            }
-            DrawLines.DrawGrid(camera, Color.white, min, max, 1, transform.localToWorldMatrix);
+            DrawLines.DrawBounds(camera, Color.gray, OuterBounds, m);
+            DrawLines.DrawBounds(camera, Color.gray, InnerBounds, m);
+            //for (int i = 0; i < FluidBounds.Count; i++)
+            //{
+            //    DrawLines.DrawBounds(camera, Color.blue, FluidBounds[i], m);
+            //}
+            //DrawLines.DrawGrid(camera, Color.white, min, max, 1, transform.localToWorldMatrix);
 
         }
 
@@ -129,6 +172,7 @@ namespace PositionBasedDynamics
 
             FluidSolver = new FluidSolver3d(FluidBody);
             FluidSolver.AddForce(new GravitationalForce3d());
+            FluidSolver.DissolutionRate = DissolutionRate;
 
         }
 
@@ -147,7 +191,7 @@ namespace PositionBasedDynamics
 
             ParticlesFromBounds source = new ParticlesFromBounds(spacing, bounds);
 
-            T = Matrix4x4d.Translate(new Vector3d(0.0, 10.0, 0.0));
+            T = Matrix4x4d.Translate(new Vector3d(0.0, 10.0, -1.0));
             R = Matrix4x4d.Rotate(new Vector3d(0.0, 0.0, 25.0));
 
             Body3d body = new Body3d(ParticlePhase.SOLID, source, radius, mass, T * R);
@@ -157,6 +201,7 @@ namespace PositionBasedDynamics
             SolidSolver = new SolidSolver3d();
             SolidSolver.AddBody(body);
             SolidSolver.FluidBody = FluidBody;
+            SolidSolver.DissolutionRate = DissolutionRate;
 
             SolidSolver.AddForce(new GravitationalForce3d());
             SolidSolver.AddCollision(new ParticleCollision3d(0));
@@ -197,7 +242,7 @@ namespace PositionBasedDynamics
                 sphere.transform.localScale = new Vector3(diam, diam, diam);
                 sphere.GetComponent<Collider>().enabled = false;
 
-                sphere.GetComponent<MeshRenderer>().material = boundaryMaterial;
+                sphere.GetComponent<MeshRenderer>().material = m_BoundaryMaterial;
 
                 BoundarySpheres[i] = sphere;
             }
@@ -244,7 +289,10 @@ namespace PositionBasedDynamics
                 sphere.transform.localScale = new Vector3(diam, diam, diam);
                 sphere.GetComponent<Collider>().enabled = false;
 
-                sphere.GetComponent<MeshRenderer>().material = fluidSphereMaterial;
+                if (View.Equals(ViewType.NORMAL))
+                    sphere.GetComponent<MeshRenderer>().material = m_FluidSphereMaterial_Standard;
+                else
+                    sphere.GetComponent<MeshRenderer>().material = m_FluidSphereMaterial_Transparent;
 
                 FluidSpheres.Add(sphere);
             }
@@ -253,7 +301,7 @@ namespace PositionBasedDynamics
 
         private void CreateSolidSpheres()
         {
-            if (solidSphereMaterial == null) return;
+            if (m_SolidSphereMaterial == null) return;
 
             SolidSpheres = new List<List<GameObject>>();
 
@@ -278,7 +326,7 @@ namespace PositionBasedDynamics
                     sphere.transform.position = pos;
                     sphere.transform.localScale = new Vector3(diam, diam, diam);
                     sphere.GetComponent<Collider>().enabled = false;
-                    sphere.GetComponent<MeshRenderer>().material = solidSphereMaterial;
+                    sphere.GetComponent<MeshRenderer>().material = m_SolidSphereMaterial;
                     spheres.Add(sphere);
                 }
                 SolidSpheres.Add(spheres);
@@ -291,7 +339,7 @@ namespace PositionBasedDynamics
             {
                 if (FluidSpheres.Count != FluidSolver.Body.NumParticles)
                 {
-                    Debug.Log("Transform: " + FluidSpheres.Count + ", " + FluidSolver.Body.NumParticles);
+                    //Debug.Log("Transform: " + FluidSpheres.Count + ", " + FluidSolver.Body.NumParticles);
                     for (int i = FluidSpheres.Count; i < FluidSolver.Body.NumParticles; i++)
                     {
                         Particle addParticle = FluidSolver.Body.Particles[i];
@@ -302,7 +350,8 @@ namespace PositionBasedDynamics
                         sphere.transform.position = new Vector3((float)pos.x, (float)pos.y, (float)pos.z);
                         sphere.transform.localScale = new Vector3(diam, diam, diam);
                         sphere.GetComponent<Collider>().enabled = false;
-                        sphere.GetComponent<MeshRenderer>().material = fluidSphereMaterial;
+                        sphere.GetComponent<MeshRenderer>().material = m_FluidSphereMaterial_Standard;
+                        sphere.GetComponent<MeshRenderer>().material.SetColor("_Color", Color.red);
                         FluidSpheres.Add(sphere);
                     }
                 }
@@ -311,8 +360,11 @@ namespace PositionBasedDynamics
                 {
                     //Debug.Log("Body positons: " + Body.Positions[i]);
                     Vector3d pos = FluidSolver.Body.Particles[i].Position;
+                    Vector4d color = FluidSolver.Body.Particles[i].Color;
                     //Debug.Log(FluidSolver.Body.Particles[i].Position);
                     FluidSpheres[i].transform.position = new Vector3((float)pos.x, (float)pos.y, (float)pos.z);
+                    if (View.Equals(ViewType.NORMAL))
+                        FluidSpheres[i].GetComponent<MeshRenderer>().material.color = new Color((float)color.x, (float)color.y, (float)color.z, (float)color.w);
                 }
             }
 
@@ -382,5 +434,39 @@ namespace PositionBasedDynamics
             return exist;
         }
 
+        private void RateDropdownValueChanged(Dropdown change)
+        {
+            if (change.value == 0)
+            {
+                // Medium
+                DissolutionRate = 10;
+            } else if (change.value == 1)
+            {
+                // Fast
+                DissolutionRate = 5;
+            } else if (change.value == 2)
+            {
+                // Slow
+                DissolutionRate = 15;
+            }
+            OnDestroy();
+            Start();
+        }
+
+        private void ViewDropdownValueChanged(Dropdown change)
+        {
+            if (change.value == 0)
+            {
+                // Normal View
+                View = ViewType.NORMAL;
+            }
+            else if (change.value == 1)
+            {
+                // Clear View
+                View = ViewType.CLEAR;
+            }
+            OnDestroy();
+            Start();
+        }
     }
 }

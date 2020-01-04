@@ -119,16 +119,15 @@ namespace PositionBasedDynamics.Bodies
             {
                 if (!FindTransedParticle(particles[i].Index))
                 {
-                    Debug.Log("mass: " + particles[i].ParticleMass);
                     particles[i].Phase = ParticlePhase.TRANSED;
-                    particles[i].Velocity = new Vector3d(0, 0, 0);
+                    particles[i].Velocity = new Vector3d(0, -1, 0);
                     particles[i].DynamicDensity = 0.0;
                     particles[i].StaticDensity = Particles[0].StaticDensity;
                     //TODO modify mass
-                    particles[i].ParticleMass = 10;
+                    particles[i].ParticleMass = 90;
                     particles[i].ParticleRadius = Particles[0].ParticleRadius;
+                    particles[i].Color = new Vector4d(1, 0, 0, 0.1f);
 
-                    Debug.Log("mass modified: " + particles[i].ParticleMass);
                     Lambda.Add(0.0);
                     Particles.Add(particles[i]);
                 }
@@ -204,9 +203,12 @@ namespace PositionBasedDynamics.Bodies
                 max.Max(postions[i]);
             }
 
-            double radius = Particles[0].ParticleRadius;
-            min -= radius;
-            max += radius;
+            if (Particles.Count > 0)
+            {
+                double radius = Particles[0].ParticleRadius;
+                min -= radius;
+                max += radius;
+            }
 
             Bounds = new Box3d(min, max);
         }

@@ -21,11 +21,16 @@ namespace PositionBasedDynamics.Solvers
 
         private List<ExternalForce3d> Forces { get; set; }
 
+        public int DissolutionRate { get; set; }
+
+        private int IterNum;
+
         public FluidSolver3d(Body3d body)
         {
             Body = body;
             Forces = new List<ExternalForce3d>();
             ParticleToTrans = new List<Particle>();
+            IterNum = 1;
         }
 
         public void UpdateParticleToTrans(List<Particle> particles)
@@ -55,6 +60,11 @@ namespace PositionBasedDynamics.Solvers
             Body.ComputeViscosity();
 
             UpdatePositions();
+
+            //if (IterNum % DissolutionRate == 0)
+                UpdateColor();
+
+            IterNum++;
         }
 
         private void ApplyExternalForces(double dt)
@@ -100,6 +110,32 @@ namespace PositionBasedDynamics.Solvers
             for (int i = 0; i < Body.NumParticles; i++)
             {
                 Body.Particles[i].Position = Body.Particles[i].Predicted;
+            }
+        }
+
+        private void UpdateColor()
+        {
+            Vector4d color = new Vector4d(0, 0, 0, 0);
+            for (int i = 0; i < Body.NumParticles; i++)
+            {
+                color = new Vector4d(0, 0, 0, 0);
+                int fluidNeighbourNum = 0;
+                for (int j = 0; j < Body.Particles[i].NeighbourIndexes.Count; j++)
+                {
+                    int neighborIndex = Body.Particles[i].NeighbourIndexes[j];
+                    if (neighborIndex < Body.NumParticles)
+                    {
+                        if (fluidNeighbourNum == 20)
+                            break;
+                        color += Body.Particles[neighborIndex].Color;
+                        fluidNeighbourNum++;
+                    }
+                }
+                color /= fluidNeighbourNum;
+                if (fluidNeighbourNum > 0)
+                {
+                    Body.Particles[i].Color = color;
+                }
             }
         }
 

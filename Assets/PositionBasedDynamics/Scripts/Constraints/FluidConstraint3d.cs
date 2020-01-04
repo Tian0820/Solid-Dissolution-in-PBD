@@ -67,8 +67,6 @@ namespace PositionBasedDynamics.Constraints
                     Vector3d result = SolveDensityConstraint(fluid, pi, i, numNeighbors[i], neighbors);
                     fluid.Particles[i].Predicted += result;
                     //fluid.Particles[i].Predicted += SolveDensityConstraint(fluid, pi, i, fluid.Particles[i].NeighbourIndexes, fluid.Particles[i].NeighbourNum);
-                    //if (i >= 512)
-                    //    Debug.Log("SolveDensityConstraint " + iter + "; " + i + " : " + result);
                 }
 
                 iter++;
@@ -80,7 +78,6 @@ namespace PositionBasedDynamics.Constraints
         private double ComputePBFDensity(Body3d fluid, Vector3d pi, int i, int numNeighbors, int[,] neighbors)
         //private double ComputePBFDensity(Body3d fluid, Vector3d pi, int i, int[] neighbors, int neighborNum)
         {
-
             //Density for Pi
             // Di = SUMj Mj * W(Pi - Pj, h)
 
@@ -94,11 +91,6 @@ namespace PositionBasedDynamics.Constraints
                 {
                     Vector3d pn = fluid.Particles[neighborIndex].Predicted;
                     fluid.Particles[i].DynamicDensity += fluid.Particles[i].ParticleMass * fluid.Kernel.W(pi.x - pn.x, pi.y - pn.y, pi.z - pn.z);
-                    //if (i >= 512)
-                    //{
-                    //    Debug.Log("DynamicDensity " + i + " : " + fluid.Particles[i].DynamicDensity
-                    //        + "; " + pn + "; " + neighborIndex + "; " + fluid.Particles[neighborIndex].Position);
-                    //}
                 }
                 else
                 {
@@ -108,6 +100,9 @@ namespace PositionBasedDynamics.Constraints
                     fluid.Particles[i].DynamicDensity += Boundary.Particles[k].BoundaryPsi * fluid.Kernel.W(pi.x - pn.x, pi.y - pn.y, pi.z - pn.z);
                 }
             }
+
+            //if (i >= 512)
+            //    Debug.Log("Color: " + Color);
 
             double maxDensity = fluid.Particles[i].DynamicDensity;
             double staticDensity = fluid.Particles[i].StaticDensity;
