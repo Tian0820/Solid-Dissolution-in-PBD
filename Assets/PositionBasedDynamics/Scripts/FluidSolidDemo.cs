@@ -51,7 +51,7 @@ namespace PositionBasedDynamics
 
         private GameObject[] BoundarySpheres { get; set; }
 
-        private Body3d FluidBody { get; set; }
+        private FluidBody3d FluidBody { get; set; }
 
         //private Body3d SolidBody { get; set; }
 
@@ -194,7 +194,7 @@ namespace PositionBasedDynamics
             T = Matrix4x4d.Translate(new Vector3d(0.0, 10.0, -1.0));
             R = Matrix4x4d.Rotate(new Vector3d(0.0, 0.0, 25.0));
 
-            Body3d body = new Body3d(ParticlePhase.SOLID, source, radius, mass, T * R);
+            Body3d body = new SolidBody3d(ParticlePhase.SOLID, source, radius, mass, T * R);
             body.Dampning = 1.0;
             body.RandomizePositions(rnd, radius * 0.01);
 
@@ -265,7 +265,7 @@ namespace PositionBasedDynamics
             System.Random rnd = new System.Random(0);
 
             //Body3d body1 = new Body3d(ParticlePhase.FLUID, source1, radius, density, Matrix4x4d.Identity);
-            Body3d body2 = new Body3d(ParticlePhase.FLUID, source2, radius, density, Matrix4x4d.Identity);
+            FluidBody3d body2 = new FluidBody3d(ParticlePhase.FLUID, source2, radius, density, Matrix4x4d.Identity);
 
             //Body = body1.ContactBody3d(body2);
             FluidBody = body2;

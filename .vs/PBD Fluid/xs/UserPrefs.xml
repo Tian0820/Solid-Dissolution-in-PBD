@@ -1,0 +1,50 @@
+﻿<Properties StartupConfiguration="{1E16AB92-377E-6FD0-69E3-F42F36CB68E4}|">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/PositionBasedDynamics/Scripts/Collisions/FluidClothContact3d.cs">
+    <Files>
+      <File FileName="Assets/PositionBasedDynamics/Scripts/FluidSolidDemo.cs" Line="156" Column="42" IsPinned="True" />
+      <File FileName="Assets/PositionBasedDynamics/Scripts/FluidClothDemo.cs" Line="20" Column="18" />
+      <File FileName="Assets/PositionBasedDynamics/Scripts/Bodies/Body3d.cs" Line="31" Column="9" />
+      <File FileName="Assets/PositionBasedDynamics/Scripts/Solvers/ClothSolver3d.cs" Line="174" Column="46" />
+      <File FileName="Assets/PositionBasedDynamics/Scripts/Constraints/PorosityConstraint3d.cs" Line="19" Column="43" />
+      <File FileName="Assets/PositionBasedDynamics/Scripts/Bodies/ClothBody3d.cs" Line="167" Column="61" />
+      <File FileName="Assets/PositionBasedDynamics/Scripts/Utilities/ArrayUtil.cs" Line="30" Column="36" />
+      <File FileName="Assets/PositionBasedDynamics/Scripts/Bodies/SolidBody3d.cs" Line="19" Column="26" />
+      <File FileName="Assets/PositionBasedDynamics/Scripts/Bodies/FluidBody3d.cs" Line="112" Column="34" />
+      <File FileName="Assets/PositionBasedDynamics/Scripts/Constraints/FluidConstraint3d.cs" Line="29" Column="44" NotebookId="1" />
+      <File FileName="Assets/PositionBasedDynamics/Scripts/Particle/Particle.cs" Line="42" Column="32" NotebookId="1" />
+      <File FileName="Assets/PositionBasedDynamics/Scripts/Collisions/FluidClothContact3d.cs" Line="60" Column="44" NotebookId="1" />
+      <File FileName="Assets/PositionBasedDynamics/Scripts/Bodies/CubicKernel3d.cs" Line="5" Column="1" NotebookId="1" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="PBD Fluid" expanded="True">
+            <Node name="Assets" expanded="True">
+              <Node name="Common" expanded="True" />
+              <Node name="PositionBasedDynamics" expanded="True">
+                <Node name="Scripts" expanded="True">
+                  <Node name="Bodies" expanded="True" />
+                  <Node name="Collisions" expanded="True">
+                    <Node name="FluidClothContact3d.cs" selected="True" />
+                  </Node>
+                  <Node name="Constraints" expanded="True" />
+                  <Node name="Particle" expanded="True" />
+                  <Node name="Solvers" expanded="True" />
+                  <Node name="Sources" expanded="True" />
+                  <Node name="Utilities" expanded="True" />
+                </Node>
+              </Node>
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.ItemProperties.Assembly-CSharp PreferredExecutionTarget="0aa480cb-5f48-4da9-9445-629f8b3e3943" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MultiItemStartupConfigurations />
+</Properties>

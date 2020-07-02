@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: FluidSphere_Transparent
-  m_Shader: {fileID: 4800000, guid: 9becf6f0f63654b4c86dc06d47feaff9, type: 3}
+  m_Shader: {fileID: 4800000, guid: 8ea9329271d564582b1a77129ff1c33c, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0

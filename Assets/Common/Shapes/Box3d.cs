@@ -62,7 +62,7 @@ namespace Common.Geometry.Shapes
         public Box3d(Vector3i min, Vector3i max)
         {
             Min = new Vector3d(min.x, min.y, min.z);
-            Max = new Vector3d(max.x, max.y, max.z); ;
+            Max = new Vector3d(max.x, max.y, max.z);
         }
 
         public Box3d(Box3d box)

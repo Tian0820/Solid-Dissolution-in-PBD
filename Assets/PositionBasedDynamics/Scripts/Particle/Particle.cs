@@ -31,11 +31,15 @@ namespace PositionBasedDynamics
 
         public List<int> NeighbourIndexes { get; set; }
 
+        public List<int> AbsorbedIndexes { get; set; }
+
         public ParticlePhase Phase { get; set; } // phase of this particle
 
         public Vector4d Color = new Vector4d(0.2f, 0.7f, 1, 0.1f);
 
         public bool needTrans { get; set; }
+
+        public bool AbsorbPhase { get; set; }
 
         public Particle(int index, Vector3d position, Vector3d predicted, Vector3d velocity, double radius,
             double mass, double staticDensity, ParticlePhase phase)
@@ -51,6 +55,7 @@ namespace PositionBasedDynamics
             DynamicDensity = 0.0;
             //NeighbourIndexes = new int[MaxNeighbourNum];
             NeighbourIndexes = new List<int>();
+            AbsorbedIndexes = new List<int>();
             needTrans = false;
             if (ParticleMass <= 0)
                 throw new ArgumentException("Particles mass <= 0");
@@ -72,6 +77,7 @@ namespace PositionBasedDynamics
             DynamicDensity = 0.0;
             //NeighbourIndexes = new int[MaxNeighbourNum];
             NeighbourIndexes = new List<int>();
+            AbsorbedIndexes = new List<int>();
             needTrans = false;
             if (ParticleMass <= 0)
                 throw new ArgumentException("Particles mass <= 0");
@@ -92,6 +98,7 @@ namespace PositionBasedDynamics
             DynamicDensity = 0.0;
             //NeighbourIndexes = new int[MaxNeighbourNum];
             NeighbourIndexes = new List<int>();
+            AbsorbedIndexes = new List<int>();
             needTrans = false;
             if (ParticleRadius <= 0)
                 throw new ArgumentException("Particles radius <= 0");

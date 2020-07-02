@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 using Common.Mathematics.LinearAlgebra;
 
@@ -23,8 +24,10 @@ namespace PositionBasedDynamics.Constraints
 
         internal override void ConstrainPositions(double di)
         {
+            //Debug.Log("position: " + Position);
+            //Debug.Log("body position: " + Body.Particles[i0].Position);
             Body.Particles[i0].Position = Position;
-            Body.Particles[i0].Position = Position;
+            Body.Particles[i0].Predicted = Position;
         }
 
     }

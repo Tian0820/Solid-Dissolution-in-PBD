@@ -15,7 +15,7 @@ namespace PositionBasedDynamics.Solvers
     public class FluidSolver3d
     {
 
-        public Body3d Body { get; set; }
+        public FluidBody3d Body { get; set; }
 
         public List<Particle> ParticleToTrans { get; set; }
 
@@ -25,7 +25,7 @@ namespace PositionBasedDynamics.Solvers
 
         private int IterNum;
 
-        public FluidSolver3d(Body3d body)
+        public FluidSolver3d(FluidBody3d body)
         {
             Body = body;
             Forces = new List<ExternalForce3d>();
@@ -61,10 +61,8 @@ namespace PositionBasedDynamics.Solvers
 
             UpdatePositions();
 
-            //if (IterNum % DissolutionRate == 0)
-                UpdateColor();
+            UpdateColor();
 
-            IterNum++;
         }
 
         private void ApplyExternalForces(double dt)
