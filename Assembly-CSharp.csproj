@@ -63,6 +63,24 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Common\Datastructures\Heap\BaseHeap.cs" />
+    <Compile Include="Assets\Common\Datastructures\Heap\KSmallest.cs" />
+    <Compile Include="Assets\Common\Datastructures\Heap\MaxHeap.cs" />
+    <Compile Include="Assets\Common\Datastructures\Heap\MinHeap.cs" />
+    <Compile Include="Assets\Common\Datastructures\KDTree\KDBounds.cs" />
+    <Compile Include="Assets\Common\Datastructures\KDTree\KDNode.cs" />
+    <Compile Include="Assets\Common\Datastructures\KDTree\KDQuery\Base.cs" />
+    <Compile Include="Assets\Common\Datastructures\KDTree\KDQuery\Debug.cs" />
+    <Compile Include="Assets\Common\Datastructures\KDTree\KDQuery\KDQueryNode.cs" />
+    <Compile Include="Assets\Common\Datastructures\KDTree\KDQuery\QueryClosest.cs" />
+    <Compile Include="Assets\Common\Datastructures\KDTree\KDQuery\QueryInterval.cs" />
+    <Compile Include="Assets\Common\Datastructures\KDTree\KDQuery\QueryKNearest.cs" />
+    <Compile Include="Assets\Common\Datastructures\KDTree\KDQuery\QueryRadius.cs" />
+    <Compile Include="Assets\Common\Datastructures\KDTree\KDTree.cs" />
+    <Compile Include="Assets\Common\Datastructures\Tests\HeapTests.cs" />
+    <Compile Include="Assets\Common\Datastructures\Tests\KDTreeBenchmark.cs" />
+    <Compile Include="Assets\Common\Datastructures\Tests\KDTreeQueryResizeTests.cs" />
+    <Compile Include="Assets\Common\Datastructures\Tests\KDTreeQueryTests.cs" />
     <Compile Include="Assets\Common\LinearAlgebra\Matrix2x2d.cs" />
     <Compile Include="Assets\Common\LinearAlgebra\Matrix2x2dDecomposition.cs" />
     <Compile Include="Assets\Common\LinearAlgebra\Matrix2x2f.cs" />
@@ -109,6 +127,7 @@
     <Compile Include="Assets\PositionBasedDynamics\Scripts\Constraints\PorosityConstraint3d.cs" />
     <Compile Include="Assets\PositionBasedDynamics\Scripts\Constraints\ShapeMatchingConstraint3d.cs" />
     <Compile Include="Assets\PositionBasedDynamics\Scripts\Constraints\StaticConstraint3d.cs" />
+    <Compile Include="Assets\PositionBasedDynamics\Scripts\Events\EventHandlers.cs" />
     <Compile Include="Assets\PositionBasedDynamics\Scripts\FluidClothDemo.cs" />
     <Compile Include="Assets\PositionBasedDynamics\Scripts\FluidSolidDemo.cs" />
     <Compile Include="Assets\PositionBasedDynamics\Scripts\Forces\ExternalForce3d.cs" />

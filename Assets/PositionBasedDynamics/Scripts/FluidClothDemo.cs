@@ -25,13 +25,22 @@ namespace PositionBasedDynamics
         [SerializeField]
         Material m_BoundaryMaterial;
 
+        [SerializeField]
+        Button m_ResetButton;
+
+        [SerializeField]
+        Slider m_StrenchSlider;
+
+        [SerializeField]
+        Slider m_BendSlider;
+
+        [SerializeField]
+        Slider m_ClothSizeSlider;
+
+        [SerializeField]
+        Slider m_FluidSizeSlider;
+
         private const double timeStep = 1.0 / 60.0;
-
-        private const int GRID_SIZE = 10;
-
-        public int DissolutionRate = 10;
-
-        public bool drawLines = true;
 
         public Material sphereMaterial;
 
@@ -55,10 +64,29 @@ namespace PositionBasedDynamics
 
         private List<Box3d> FluidBounds;
 
+        private double StretchStiffness;
+
+        private double BendStiffness;
+
+        private double ClothSize;
+
+        private double FluidSize;
+
+        private double ClothHeight = 3.0;
+
+        private double FluidHeight = 3.5;
+
         void Start()
         {
+            ClothSize = getSizeValue(m_ClothSizeSlider);
+            FluidSize = getSizeValue(m_FluidSizeSlider);
+            StretchStiffness = getStiffnessValue(m_StrenchSlider);
+            BendStiffness = getStiffnessValue(m_BendSlider);
+
             InitializeFluid();
             InitializeCloth();
+
+            AddEventListener();
         }
 
         void Update()
@@ -74,7 +102,7 @@ namespace PositionBasedDynamics
             FluidSolver.StepPhysics(timeStep);
             UpdateFluidSpheres();
             UpdateClothSpheres();
-            
+
         }
 
         void OnDestroy()
@@ -83,6 +111,24 @@ namespace PositionBasedDynamics
             {
                 for (int i = 0; i < ClothSpheres.Count; i++)
                     DestroyImmediate(ClothSpheres[i]);
+            }
+
+            if (FluidSpheres != null)
+            {
+                for (int i = 0; i < FluidSpheres.Count; i++)
+                {
+                    DestroyImmediate(FluidSpheres[i]);
+                    FluidSpheres[i] = null;
+                }
+            }
+
+            if (BoundarySpheres != null)
+            {
+                for (int i = 0; i < BoundarySpheres.Length; i++)
+                {
+                    DestroyImmediate(BoundarySpheres[i]);
+                    BoundarySpheres[i] = null;
+                }
             }
         }
 
@@ -96,19 +142,16 @@ namespace PositionBasedDynamics
 
             FluidSolver = new FluidSolver3d(FluidBody);
             FluidSolver.AddForce(new GravitationalForce3d());
-            FluidSolver.DissolutionRate = DissolutionRate;
         }
 
         public void InitializeCloth()
         {
-            double stretchStiffness = 0.1;
-            double bendStiffness = 0.5;
             double mass = 1.0;
             double radius = 0.1;
 
-            double width = 4.0;
-            double height = 3.0;
-            double depth = 4.0;
+            double width = ClothSize;
+            double height = ClothHeight;
+            double depth = ClothSize;
 
             TrianglesFromGrid source = new TrianglesFromGrid(radius, width, depth);
 
@@ -117,7 +160,7 @@ namespace PositionBasedDynamics
             Matrix4x4d RT = T * R;
 
             //Body = new Body3d(source, radius, mass, stretchStiffness, bendStiffness, RT);
-            ClothBody = new ClothBody3d(ParticlePhase.CLOTH, source, radius, mass, stretchStiffness, bendStiffness, RT);
+            ClothBody = new ClothBody3d(ParticlePhase.CLOTH, source, radius, mass, StretchStiffness, BendStiffness, RT);
             ClothBody.Dampning = 1.0;
 
             //Vector3d min = new Vector3d(-width / 2 - 0.1, height - 0.1, -depth / 2 - 0.1);
@@ -154,7 +197,7 @@ namespace PositionBasedDynamics
             //Make sure fluid bounds fits inside the boundrys bounds.
 
             FluidBounds = new List<Box3d>();
-            FluidBounds.Add(new Box3d(-0.5, 0.5, 3.5, 6, -0.5, 0.5));
+            FluidBounds.Add(new Box3d(-0.5, 0.5, FluidHeight, FluidHeight + FluidSize, -0.5, 0.5));
 
             ParticlesFromBounds source = new ParticlesFromBounds(radius, FluidBounds[0]);
 
@@ -311,6 +354,78 @@ namespace PositionBasedDynamics
                 BoundarySpheres[i] = sphere;
             }
 
+        }
+
+        private void AddEventListener()
+        {
+            m_ResetButton.onClick.AddListener(delegate
+            {
+                ResetButtonClicked();
+            });
+
+            m_ClothSizeSlider.onValueChanged.AddListener(delegate
+            {
+                ClothSizeReset(m_ClothSizeSlider);
+            });
+
+            m_FluidSizeSlider.onValueChanged.AddListener(delegate
+            {
+                FluidSizeReset(m_FluidSizeSlider);
+            });
+
+            m_StrenchSlider.onValueChanged.AddListener(delegate
+            {
+                StrenchStiffnessReset(m_StrenchSlider);
+            });
+
+            m_BendSlider.onValueChanged.AddListener(delegate
+            {
+                BendStiffnessReset(m_BendSlider);
+            });
+        }
+
+        private void ResetButtonClicked()
+        {
+            OnDestroy();
+            Start();
+        }
+
+        private void ClothSizeReset(Slider slider)
+        {
+            OnDestroy();
+            ClothSize = slider.value * 0.5;
+            Start();
+        }
+
+        private void FluidSizeReset(Slider slider)
+        {
+            OnDestroy();
+            FluidSize = slider.value * 0.5;
+            Start();
+        }
+
+        private void StrenchStiffnessReset(Slider slider)
+        {
+            OnDestroy();
+            StretchStiffness = slider.value;
+            Start();
+        }
+
+        private void BendStiffnessReset(Slider slider)
+        {
+            OnDestroy();
+            BendStiffness = slider.value;
+            Start();
+        }
+
+        private double getSizeValue(Slider slider)
+        {
+            return slider.value * 0.5;
+        }
+
+        private double getStiffnessValue(Slider slider)
+        {
+            return slider.value;
         }
     }
 }

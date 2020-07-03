@@ -175,12 +175,7 @@ namespace PositionBasedDynamics.Solvers
                     {
                         Vector4d newColor = Util.ChangeColor(body.Particles[i].Color, body.Saturations[i]);
                         body.Particles[i].Color = newColor;
-                        //Debug.Log("absorb phase");
                     }
-                    //else
-                    //{
-
-                    //}
                 }
             }
             //Debug.Log("===============");

@@ -30,7 +30,7 @@ namespace PositionBasedDynamics.Utilities
         public Vector4d ChangeColor(Vector4d originColor, double saturation)
         {
             Vector3d originRGB = new Vector3d(originColor.x, originColor.y, originColor.z);
-            Vector3d saturated = new Vector3d(0.45, 0.15, 0.17);
+            Vector3d saturated = new Vector3d(0.3, 0.1, 0.1);
             Vector3d newRGB;
             //newRGB = originRGB - saturation * originRGB / 10000;
             newRGB = originRGB + saturation * (saturated - originRGB);

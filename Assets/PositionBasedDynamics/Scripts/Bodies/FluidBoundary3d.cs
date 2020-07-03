@@ -65,7 +65,8 @@ namespace PositionBasedDynamics.Bodies
 
             ParticleHash3d hash = new ParticleHash3d(NumParticles, cellSize);
 
-            Particles = hash.NeighborhoodSearch(Particles);
+            //Particles = hash.NeighborhoodSearch(Particles);
+            Particles = hash.NeighborhoodSearchKD(Particles);
             //hash.NeighborhoodSearch(Particles);
 
             //int[,] neighbors = hash.Neighbors;

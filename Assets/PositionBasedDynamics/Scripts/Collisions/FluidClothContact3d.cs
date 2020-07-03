@@ -48,8 +48,8 @@ namespace PositionBasedDynamics.Collisions
 
                 Vector3d delta = di * (Diameter - len) * normal; 
 
-                FluidBody.Particles[i1].Predicted += 2 * delta * Mass1;
-                FluidBody.Particles[i1].Position += 2 * delta * Mass1;
+                FluidBody.Particles[i1].Predicted += 3 * delta * Mass1;
+                FluidBody.Particles[i1].Position += 3 * delta * Mass1;
 
                 ClothBody.Particles[i0].Predicted -= 2 * delta * Mass1;
                 ClothBody.Particles[i0].Position -= 2 * delta * Mass1;
@@ -57,6 +57,7 @@ namespace PositionBasedDynamics.Collisions
                 if (!ClothBody.Particles[i0].AbsorbedIndexes.Contains(i1))
                 {
                     ClothBody.Particles[i0].AbsorbedIndexes.Add(i1);
+                    FluidBody.Particles[i1].ParticleRadius -= 0.01;
                     ClothBody.Particles[i0].AbsorbPhase = true;
                 }
                 else

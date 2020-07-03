@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 
 using Common.Mathematics.LinearAlgebra;
+using DataStructures.ViliWonka.KDTree;
 
 namespace PositionBasedDynamics.Collisions
 {
@@ -42,6 +43,12 @@ namespace PositionBasedDynamics.Collisions
         private int CurrentTimeStamp { get; set; }
 
         private Dictionary<int, HashEntry> GridMap { get; set; }
+
+        public ParticleHash3d(int maxNeighbors = 200, int maxParticlesPerCell = 50)
+        {
+            MaxParticlesPerCell = maxParticlesPerCell;
+            MaxNeighbors = maxNeighbors;
+        }
 
         public ParticleHash3d(int numParticles, double cellSize, int maxNeighbors = 200, int maxParticlesPerCell = 50)
         {
@@ -292,7 +299,7 @@ namespace PositionBasedDynamics.Collisions
                                 //if ((pi < numParticles && particles1[pi].Phase.Equals(ParticlePhase.FLUID)) ||
                                 //    (pi >= numParticles && particles2[pi - numParticles].Phase.Equals(ParticlePhase.BOUNDARY)))
                                 {
-                                    if (particles1[i].NeighbourIndexes.Count < MaxNeighbors)
+                                    if (particles1[i].NeighbourIndexes.Count < MaxNeighbors && !particles1[i].NeighbourIndexes.Contains(pi))
                                     {
                                         //Neighbors[i, NumNeighbors[i]++] = pi;
                                         particles1[i].NeighbourIndexes.Add(pi);
@@ -307,6 +314,74 @@ namespace PositionBasedDynamics.Collisions
             }
             return particles1;
             //End of function
+        }
+
+        public List<Particle> NeighborhoodSearchKD(List<Particle> particles)
+        {
+            double r2 = CellSize * CellSize;
+            Vector3[] particlePos = new Vector3[particles.Count];
+            for (int i = 0; i < particles.Count; i++)
+            {
+                Vector3d position = particles[i].Position;
+                particlePos[i] = new Vector3((float)position.x, (float)position.y, (float)position.z);
+            }
+
+            int maxPointsPerLeafNode = 32;
+            KDTree tree = new KDTree(particlePos, maxPointsPerLeafNode);
+
+            KDQuery query = new KDQuery();
+
+
+            for (int i = 0; i < particles.Count; i++)
+            {
+                // spherical query
+                List<int> results = new List<int>();
+
+                query.Radius(tree, particlePos[i], (float)r2, results);
+                if (particles[i].NeighbourIndexes.Count + results.Count < MaxNeighbors)
+                {
+                    particles[i].NeighbourIndexes.AddRange(results);
+                }
+                else
+                    throw new InvalidOperationException("too many neighbors detected");
+            }
+            return particles;
+        }
+
+        public List<Particle> NeighborhoodSearchKD(List<Particle> particles1, List<Particle> particles2)
+        {
+            double r = particles1[0].ParticleRadius + particles2[0].ParticleRadius;
+            Vector3[] particlePos = new Vector3[particles2.Count];
+            for (int i = 0; i < particles2.Count; i++)
+            {
+                Vector3d position = particles2[i].Position;
+                particlePos[i] = new Vector3((float)position.x, (float)position.y, (float)position.z);
+            }
+
+            int maxPointsPerLeafNode = 32;
+            KDTree tree = new KDTree(particlePos, maxPointsPerLeafNode);
+
+            KDQuery query = new KDQuery();
+
+            for (int i = 0; i < particles1.Count; i++)
+            {
+                Vector3 pos = new Vector3((float)particles1[i].Position.x, (float)particles1[i].Position.y, (float)particles1[i].Position.z);
+                
+                // spherical query
+                List<int> results = new List<int>();
+                query.Radius(tree, pos, (float)r, results);
+
+                if (particles1[i].NeighbourIndexes.Count + results.Count < MaxNeighbors)
+                {
+                    particles1[i].NeighbourIndexes.AddRange(results);
+                }
+                else
+                    //Debug.Log("NeighbourIndexes: " + particles1[i].NeighbourIndexes.Count + "; results: " + results.Count);
+                    throw new InvalidOperationException("too many neighbors detected " + MaxNeighbors + "; NeighbourIndexes: " + particles1[i].NeighbourIndexes.Count + "; results: " + results.Count);
+            }
+
+            return particles1;
+
         }
     }
 

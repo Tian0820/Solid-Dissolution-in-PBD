@@ -133,39 +133,51 @@ namespace PositionBasedDynamics.Bodies
             int width = nRows + 1;
             for (int index = 0; index < NumParticles; index++)
             {
-                int i = index / height;
-                int j = index % width;
-                // 8 neighbours: (i-1,j-1), (i-1,j), (i-1,j+1), (i,j-1), (i,j+1), (i+1,j-1), (i+1,j), (i+1,j+1)
-                int[] neighbors = new int[8];
-                neighbors[0] = (i - 1) * width + (j - 1);
-                neighbors[1] = (i - 1) * width + j;
-                neighbors[2] = (i - 1) * width + (j + 1);
-                neighbors[3] = i * width + (j - 1);
-                neighbors[4] = i * width + (j + 1);
-                neighbors[5] = (i + 1) * width + (j - 1);
-                neighbors[6] = (i + 1) * width + j;
-                neighbors[7] = (i + 1) * width + (j + 1);
-
-                Vector3d pi = Particles[index].Predicted;
-
                 // particle volume
-                double Vi = 0;
-                for (int k = 0; k < 8; k++)
-                {
-                    if (neighbors[k] >= 0 && neighbors[k] < NumParticles)
-                    {
-                        Vector3d pk = Particles[neighbors[k]].Predicted;
-                        Vector3d temp = new Vector3d(pi.x - pk.x, pi.y - pk.y, pi.z - pk.z);
-                        Vi += ClothKernel.W(temp);
-                    }
-                }
+                double Vi = 1.0 / computeSumW(index);
+                
                 int m_absorbed = Particles[index].AbsorbedIndexes.Count;
-                Saturations[index] = m_absorbed * Vi;
+                Saturations[index] = (double)m_absorbed / Vi;
 
                 //Debug.Log("computeSaturation " + index + ": " + m_absorbed + "; Vi: " + Vi + "; Saturation: " + Saturations[index]);
             }
             Saturations = Util.NormalizeData(Saturations);
         }
+
+        private double computeSumW(int index)
+        {
+            int height = nCols + 1;
+            int width = nRows + 1;
+            int i = index / height;
+            int j = index % width;
+            // compute Wik (k is the index of the neighboring cloth particle)
+            int[] neighbors = new int[8];
+            neighbors[0] = (i - 1) * width + (j - 1);
+            neighbors[1] = (i - 1) * width + j;
+            neighbors[2] = (i - 1) * width + (j + 1);
+            neighbors[3] = i * width + (j - 1);
+            neighbors[4] = i * width + (j + 1);
+            neighbors[5] = (i + 1) * width + (j - 1);
+            neighbors[6] = (i + 1) * width + j;
+            neighbors[7] = (i + 1) * width + (j + 1);
+
+            Vector3d pi = Particles[index].Predicted;
+
+            double Wik = 0;
+            for (int k = 0; k < 8; k++)
+            {
+                if (neighbors[k] >= 0 && neighbors[k] < NumParticles)
+                {
+                    Vector3d pk = Particles[neighbors[k]].Predicted;
+                    Vector3d temp = new Vector3d(pi.x - pk.x, pi.y - pk.y, pi.z - pk.z);
+                    Wik += ClothKernel.W(temp);
+                }
+            }
+            return Wik;
+        }
+
     }
+
+    
 
 }
